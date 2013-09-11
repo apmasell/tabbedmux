@@ -65,7 +65,7 @@ namespace SshMux {
 
 				match_set_cursor_type(id, Gdk.CursorType.HAND2);
 			} catch(RegexError e) {
-				error(e.message);
+				critical(e.message);
 			}
 		}
 
@@ -99,7 +99,7 @@ namespace SshMux {
 				}
 				stream.exec(command.str);
 			} catch (IOError e) {
-				error(e.message);
+				critical(e.message);
 			}
 		}
 
@@ -199,7 +199,7 @@ namespace SshMux {
 				}
 				return false;
 			} catch (SpawnError e) {
-				error(e.message);
+				critical(e.message);
 			}
 			return false;
 		}
@@ -255,7 +255,7 @@ warning("output: %s", output_line);
 											pane.term_height = height;
 											pane.check_resize(false);
 										} else {
-											error("Cannot parse list-panes output: %s", output_line);
+											critical("Cannot parse list-panes output: %s", output_line);
 										}
 										break;
 									case NextOutput.NONE:
@@ -316,7 +316,7 @@ warning("done: %s", output_line);
 							break;
 					}
 				} catch (Error e) {
-					error(e.message);
+					critical(e.message);
 				}
 			}
 		}
