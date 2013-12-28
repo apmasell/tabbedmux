@@ -1,0 +1,4 @@
+*~
+*.c
+*.gresource
+!password_adapter.c
