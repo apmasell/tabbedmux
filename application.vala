@@ -27,7 +27,6 @@ public class SshMux.Application : Gtk.Application {
 	}
 
 	private void on_stream_closed (TMuxStream stream, string reason) {
-		//TODO remove from new session menu
 		streams.remove (stream);
 		try {
 			var notification = new Notify.Notification (@"Disconnected from $(stream.name) session '$(stream.session_name)'.", reason, null);

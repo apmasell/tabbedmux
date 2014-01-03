@@ -104,11 +104,11 @@ public class SshMux.Window : Gtk.ApplicationWindow {
 					stream.create_window ();
 				}
 			} else if (streams.size > 1) {
-				//TODO show dialog
-			} else {
-				var dialog = new Gtk.MessageDialog (this, Gtk.DialogFlags.MODAL,  Gtk.MessageType.WARNING, Gtk.ButtonsType.OK, "No TMux instances are currently connected.");
+				var dialog = new Gtk.MessageDialog (this, Gtk.DialogFlags.MODAL,  Gtk.MessageType.WARNING, Gtk.ButtonsType.OK, "Multiple TMux instances are currently connected.");
 				dialog.run ();
 				dialog.destroy ();
+			} else {
+				add_stream ();
 			}
 		}
 	}
