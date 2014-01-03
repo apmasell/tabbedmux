@@ -36,6 +36,8 @@ public class SshMux.DisconnectMenuItem : MenuItem {
 [GtkTemplate (ui = "/name/masella/sshmux/window.ui")]
 public class SshMux.Window : Gtk.ApplicationWindow {
 	[GtkChild]
+	private Gtk.MenuItem copy_item;
+	[GtkChild]
 	private Gtk.Menu new_menu;
 	[GtkChild]
 	private Gtk.Notebook notebook;
@@ -81,11 +83,18 @@ public class SshMux.Window : Gtk.ApplicationWindow {
 		disconnect_menu.@foreach ((widget) => menu_remove (widget, disconnect_menu, stream));
 	}
 
+	private void on_selection_changed (Vte.Terminal terminal) {
+		if (notebook.get_nth_page (notebook.page) == terminal) {
+			copy_item.sensitive = terminal.get_has_selection ();
+		}
+	}
+
 	internal void add_window (TMuxWindow window) {
 		var terminal = new Terminal (window);
 		unowned Window unowned_this = this;
 		// TODO disconnect on close
 		window.closed.connect (unowned_this.on_tmux_window_closed);
+		terminal.selection_changed.connect (unowned_this.on_selection_changed);
 		notebook.append_page (terminal, terminal.tab_label);
 		notebook.set_tab_reorderable (terminal, true);
 		message ("Adding window from %s.", window.stream.name);
@@ -123,6 +132,22 @@ public class SshMux.Window : Gtk.ApplicationWindow {
 				       );
 	}
 	[GtkCallback]
+	private void on_copy () {
+		var widget = notebook.get_nth_page (notebook.page) as Terminal;
+		if (widget != null) {
+			widget.copy_primary ();
+		}
+	}
+
+	[GtkCallback]
+	private void on_paste () {
+		var widget = notebook.get_nth_page (notebook.page) as Terminal;
+		if (widget != null) {
+			widget.paste_primary ();
+		}
+	}
+
+	[GtkCallback]
 	private void on_quit () {
 		destroy ();
 	}
@@ -151,6 +176,7 @@ public class SshMux.Window : Gtk.ApplicationWindow {
 				terminal.resize_tmux ();
 				unsized_children.remove (terminal);
 			}
+			copy_item.sensitive = terminal.get_has_selection ();
 		} else {
 			message ("Non-terminal found in window.");
 		}
