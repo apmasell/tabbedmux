@@ -21,6 +21,13 @@ public class SshMux.OpenDialog : Gtk.Window {
 		destroy ();
 	}
 
+	[GtkCallback]
+	private void on_ssh_changed () {
+		if (!remote_connection.active) {
+			remote_connection.active = true;
+		}
+	}
+
 	private void show_error (string message) {
 		var dialog = new Gtk.MessageDialog (this, Gtk.DialogFlags.MODAL,  Gtk.MessageType.ERROR, Gtk.ButtonsType.OK, message);
 		dialog.run ();
