@@ -113,6 +113,16 @@ public class SshMux.Window : Gtk.ApplicationWindow {
 		}
 	}
 	[GtkCallback]
+	private void on_about () {
+		Gtk.show_about_dialog (this,
+				       "program-name", "SshMux",
+				       "copyright", "Copyright 2013-2014 Andre Masella",
+				       "authors", new string[] { "Andre Masella" },
+				       "website", "https://github.com/apmasell/sshmux",
+				       "website-label", "GitHub Repository"
+				       );
+	}
+	[GtkCallback]
 	private void on_quit () {
 		destroy ();
 	}
