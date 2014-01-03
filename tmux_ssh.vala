@@ -65,10 +65,6 @@ namespace SshMux {
 		}
 
 		private static bool do_public_key_auth (SSH2.Session connection, string username, string host, uint16 port) {
-			unowned string auth_methods = connection.list_authentication (username.data);
-			if (!("publickey" in auth_methods)) {
-				return false;
-			}
 			var agent = connection.create_agent ();
 			if (agent != null && agent.list_identities () != SSH2.Error.NONE) {
 				unowned SSH2.AgentKey? key = null;
@@ -86,8 +82,9 @@ namespace SshMux {
 			return connection.auth_publickey_from_file (username, @"$(Environment.get_home_dir())/.ssh/id_rsa.pub", @"$(Environment.get_home_dir())/.ssh/id_rsa", null) == SSH2.Error.NONE;
 		}
 
-		public delegate string[] InteractiveAuthentication (string username, string instruction, string[] prompts);
+		public delegate void InteractiveAuthentication (string username, string instruction, SSH2.keyboard_prompt[] prompts, SSH2.keyboard_response[] responses);
 		private static extern SSH2.Error password_adapter (SSH2.Session session, string username, InteractiveAuthentication handler);
+		private static extern SSH2.Error password_simple (SSH2.Session session, string username, InteractiveAuthentication handler);
 
 		public static TMuxStream? open (string session_name, string host, uint16 port, string username, InteractiveAuthentication? get_password) throws Error {
 			var session = SSH2.Session.create<bool> ();
@@ -106,10 +103,35 @@ namespace SshMux {
 				session.get_last_error (out error_message);
 				throw new IOError.INVALID_DATA ((string) error_message);
 			}
-			if (!do_public_key_auth (session, username, host, port) && (get_password == null || password_adapter (session, username, get_password) != SSH2.Error.NONE)) {
+			foreach (var method in session.list_authentication (username.data).split (",")) {
+				if (session.authenticated) {
+					break;
+				}
+				switch (method) {
+				 case "publickey" :
+					 do_public_key_auth (session, username, host, port);
+					 break;
+
+				 case "keyboard-interactive" :
+					 if (get_password != null) {
+						 password_adapter (session, username, get_password);
+					 }
+					 break;
+
+				 case "password" :
+					 if (get_password != null) {
+						 password_simple (session, username, get_password);
+					 }
+					 break;
+
+				 default :
+					 message ("Skipping unknown authentication method: %s", method);
+					 break;
+				}
+			}
+			if (!session.authenticated) {
 				return null;
 			}
-
 			var channel = session.open_channel ();
 			if (channel == null) {
 				char[] error_message;

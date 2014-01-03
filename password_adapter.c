@@ -2,13 +2,14 @@
 #include<libssh2.h>
 #include<string.h>
 
-typedef gchar **(
+typedef void (
 	*SshMuxTMuxSshStreamInteractiveAuthentication) (
 	const gchar * username,
 	const gchar * instruction,
-	gchar ** prompts,
-	int prompts_length1,
-	int *result_length1,
+	const LIBSSH2_USERAUTH_KBDINT_PROMPT * prompts,
+	int prompts_length,
+	LIBSSH2_USERAUTH_KBDINT_RESPONSE * responses,
+	int responses_length,
 	void *user_data);
 
 struct delegate_data {
@@ -28,29 +29,10 @@ void response_callback(
 	void **abstract) {
 
 	struct delegate_data *data = *abstract;
-	gchar **str_responses;
-	int response_length;
-	gchar **str_prompts;
-	int it;
 
-	str_prompts = g_new(char *,
-		name_len);
-	for (it = 0; it < num_prompts; it++) {
-		str_prompts[it] = prompts[it].text;
-	}
 	*abstract = data->original_abstract;
-	str_responses = data->handler(name, instruction, str_prompts, num_prompts, &response_length, data->handler_target);
+	data->handler(name, instruction, prompts, num_prompts, responses, num_prompts, data->handler_target);
 	*abstract = data;
-	for (it = 0; it < response_length; it++) {
-		responses[it].text = str_responses[it];
-		responses[it].length = strlen(str_responses[it]);
-	}
-	for (it = response_length; it < num_prompts; it++) {
-		responses[it].text = NULL;
-		responses[it].length = 0;
-	}
-	g_free(str_prompts);
-	g_free(str_responses);
 }
 
 int ssh_mux_tmux_ssh_stream_password_adapter(
@@ -61,6 +43,9 @@ int ssh_mux_tmux_ssh_stream_password_adapter(
 	void **abstract;
 	int result;
 	struct delegate_data data;
+
+	abstract = libssh2_session_abstract(session);
+
 	data.original_abstract = *abstract;
 	*abstract = &data;
 	data.handler = handler;
@@ -68,4 +53,28 @@ int ssh_mux_tmux_ssh_stream_password_adapter(
 
 	result = libssh2_userauth_keyboard_interactive(session, username, response_callback);
 	*abstract = data.original_abstract;
+	return result;
+}
+
+int ssh_mux_tmux_ssh_stream_password_simple(
+	LIBSSH2_SESSION * session,
+	const gchar * username,
+	SshMuxTMuxSshStreamInteractiveAuthentication handler,
+	void *handler_target) {
+
+	LIBSSH2_USERAUTH_KBDINT_PROMPT prompt;
+	LIBSSH2_USERAUTH_KBDINT_RESPONSE response;
+	int result;
+
+	prompt.text = "Password:";
+	prompt.length = strlen(prompt.text);
+	prompt.echo = 0;
+	response.text = NULL;
+	response.length = 0;
+
+	handler(username, "Enter password.", &prompt, 1, &response, 1, handler_target);
+
+	result = libssh2_userauth_password(session, username, response.text);
+	g_free(response.text);
+	return result;
 }

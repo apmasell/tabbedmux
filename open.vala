@@ -69,7 +69,8 @@ public class SshMux.OpenDialog : Gtk.Window {
 				if (username.length == 0) {
 					username = Environment.get_user_name ();
 				}
-				stream = TMuxSshStream.open (session_name, host.text, (short) port_number, username, null); //TODO keyboard-interactive handler
+				var keybd_dialog = new KeyboardInteractiveDialog (this, host.text);
+				stream = TMuxSshStream.open (session_name, host.text, (short) port_number, username, keybd_dialog.respond);
 			} else {
 				stream = TMuxLocalStream.open (session.text);
 			}

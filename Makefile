@@ -2,6 +2,7 @@ NULL =
 
 SOURCES = \
 	application.vala \
+	keyboard_interactive.vala \
 	open.vala \
 	password_adapter.c \
 	resources.c \
