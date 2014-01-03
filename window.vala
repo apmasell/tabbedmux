@@ -79,6 +79,13 @@ public class SshMux.Window : Gtk.ApplicationWindow {
 			message ("Non-terminal found in window.");
 		}
 	}
+	[GtkCallback]
+	private void refresh_tab () {
+		var widget = notebook.get_nth_page (notebook.page) as Terminal;
+		if (widget != null) {
+			widget.tmux_window.refresh ();
+		}
+	}
 	internal void update_tab_names () {
 		for (var it = 0; it < notebook.get_n_pages (); it++) {
 			var terminal = notebook.get_nth_page (it) as Terminal;
