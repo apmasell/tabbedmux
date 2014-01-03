@@ -18,6 +18,11 @@ public class SshMux.Application : Gtk.Application {
 		stream.window_created.connect (unowned_this.on_window_created);
 		streams.add (stream);
 		stream.start ();
+		foreach (var window in get_windows ()) {
+			if (window is Window) {
+				((Window) window).add_new_stream (stream);
+			}
+		}
 		message ("Added TMux stream for %s:%s.",  stream.name, stream.session_name);
 	}
 

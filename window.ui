@@ -37,6 +37,20 @@
                       </object>
                     </child>
                     <child>
+                      <object class="GtkMenuItem" id="new_session_item">
+                        <property name="use_action_appearance">False</property>
+                        <property name="visible">True</property>
+                        <property name="can_focus">False</property>
+                        <property name="label" translatable="yes">New on</property>
+                        <child type="submenu">
+                          <object class="GtkMenu" id="new_menu">
+                            <property name="visible">True</property>
+                            <property name="can_focus">False</property>
+                          </object>
+                        </child>
+                      </object>
+                    </child>
+                    <child>
                       <object class="GtkImageMenuItem" id="open_session">
                         <property name="label">gtk-open</property>
                         <property name="use_action_appearance">False</property>
@@ -45,6 +59,20 @@
                         <property name="use_underline">True</property>
                         <property name="use_stock">True</property>
                         <signal name="activate" handler="add_stream" object="SshMuxWindow" swapped="no"/>
+                      </object>
+                    </child>
+                    <child>
+                      <object class="GtkMenuItem" id="end_session_item">
+                        <property name="use_action_appearance">False</property>
+                        <property name="visible">True</property>
+                        <property name="can_focus">False</property>
+                        <property name="label" translatable="yes">Disconnect</property>
+                        <child type="submenu">
+                          <object class="GtkMenu" id="disconnect_menu">
+                            <property name="visible">True</property>
+                            <property name="can_focus">False</property>
+                          </object>
+                        </child>
                       </object>
                     </child>
                     <child>

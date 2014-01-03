@@ -1,7 +1,46 @@
+public class SshMux.MenuItem : Gtk.MenuItem {
+	public TMuxStream stream {
+		get; private set;
+	}
+	public MenuItem (TMuxStream stream) {
+		Object ();
+		this.stream = stream;
+		unowned MenuItem unowned_this = this;
+		stream.connection_closed.connect (unowned_this.on_rename);
+		on_rename ();
+	}
+
+	private void on_rename () {
+		set_label (@"$(stream.session_name) - $(stream.name)");
+	}
+}
+public class SshMux.NewMenuItem : MenuItem {
+	public NewMenuItem (TMuxStream stream) {
+		base (stream);
+	}
+
+	public override void activate () {
+		stream.create_window ();
+	}
+}
+
+public class SshMux.DisconnectMenuItem : MenuItem {
+	public DisconnectMenuItem (TMuxStream stream) {
+		base (stream);
+	}
+
+	public override void activate () {
+		stream.cancel ();
+	}
+}
 [GtkTemplate (ui = "/name/masella/sshmux/window.ui")]
 public class SshMux.Window : Gtk.ApplicationWindow {
 	[GtkChild]
+	private Gtk.Menu new_menu;
+	[GtkChild]
 	private Gtk.Notebook notebook;
+	[GtkChild]
+	private Gtk.Menu disconnect_menu;
 
 	private Gee.Set<Terminal> unsized_children = new Gee.HashSet<Terminal> ();
 
@@ -9,6 +48,11 @@ public class SshMux.Window : Gtk.ApplicationWindow {
 		Object (application: app, title: "SSHMux", show_menubar: true);
 		add_events (Gdk.EventMask.STRUCTURE_MASK | Gdk.EventMask.SUBSTRUCTURE_MASK);
 		this.set_default_size (600, 400);
+		if (app is Application) {
+			foreach (var stream in ((Application) app).streams) {
+				add_new_stream (stream);
+			}
+		}
 	}
 
 	[GtkCallback]
@@ -16,6 +60,27 @@ public class SshMux.Window : Gtk.ApplicationWindow {
 		var open_dialog = new OpenDialog (this);
 		open_dialog.show ();
 	}
+
+	internal void add_new_stream (TMuxStream stream) {
+		var new_item = new NewMenuItem (stream);
+		new_menu.append (new_item);
+		var disconnect_item = new DisconnectMenuItem (stream);
+		disconnect_menu.append (disconnect_item);
+		unowned Window unowned_this = this;
+		stream.connection_closed.connect (unowned_this.on_connection_closed);
+	}
+
+	private static void menu_remove (Gtk.Widget widget, Gtk.Menu parent, TMuxStream stream) {
+		if (widget is MenuItem && ((MenuItem) widget).stream == stream) {
+			parent.remove (widget);
+		}
+	}
+
+	internal void on_connection_closed (TMuxStream stream, string reason) {
+		new_menu.@foreach ((widget) => menu_remove (widget, new_menu, stream));
+		disconnect_menu.@foreach ((widget) => menu_remove (widget, disconnect_menu, stream));
+	}
+
 	internal void add_window (TMuxWindow window) {
 		var terminal = new Terminal (window);
 		unowned Window unowned_this = this;
@@ -26,6 +91,7 @@ public class SshMux.Window : Gtk.ApplicationWindow {
 		message ("Adding window from %s.", window.stream.name);
 		show_all ();
 	}
+
 	[GtkCallback]
 	private void create_session () {
 		var widget = notebook.get_nth_page (notebook.page) as Terminal;
@@ -84,14 +150,6 @@ public class SshMux.Window : Gtk.ApplicationWindow {
 		var widget = notebook.get_nth_page (notebook.page) as Terminal;
 		if (widget != null) {
 			widget.tmux_window.refresh ();
-		}
-	}
-	internal void update_tab_names () {
-		for (var it = 0; it < notebook.get_n_pages (); it++) {
-			var terminal = notebook.get_nth_page (it) as Terminal;
-			if (terminal != null) {
-				terminal.update_tab_label ();
-			}
 		}
 	}
 	public override bool configure_event (Gdk.EventConfigure event) {
