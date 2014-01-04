@@ -12,8 +12,8 @@ public class SshMux.Terminal : Vte.Terminal {
 		this.emulation = TERM_TYPE;
 		this.pointer_autohide = true;
 		try {
-			var regex = new GLib.Regex ("[a-zA-Z][a-zA-Z0-9+.-]*:([A-Za-z0-9_~:/?#[]@!$&'()*+,;=-]|%[0-9A-Fa-f][0-9A-Fa-f])+");
-			int id = this.match_add_gregex (regex, 0);
+			var regex = new GLib.Regex ("(aim|apt|apt+http|bluetooth|callto|file|finger|fish|ftps?|https?|imaps?|info|ldaps?|magnet|man|mms[tu]?|nfs|nntps?|obexftp|pop3s?|rdp|rtsp[tu]?|sftp|sieve|skype|smb|smtps?|tel|vnc|webcal|webdavs?|xmpp):([A-Za-z0-9_~:/?#@!$&'()*+,;=[\\].-]|%[0-9A-Fa-f][0-9A-Fa-f])+");
+			int id = match_add_gregex (regex, 0);
 			match_set_cursor_type (id, Gdk.CursorType.HAND2);
 		} catch (RegexError e) {
 			critical (e.message);
@@ -23,6 +23,23 @@ public class SshMux.Terminal : Vte.Terminal {
 		tmux_window.stream.renamed.connect (unowned_this.update_tab_label);
 		tmux_window.rx_data.connect (unowned_this.feed);
 		tmux_window.size_changed.connect (unowned_this.set_size_from_tmux);
+	}
+
+	public override bool button_press_event (Gdk.EventButton event) {
+		if (event.type == Gdk.EventType.BUTTON_PRESS && event.button == 1) {
+			var url = get_link ((long) event.x, (long) event.y);
+			if (url != null) {
+				try {
+					AppInfo.launch_default_for_uri (url, null);
+				} catch (Error e) {
+					var dialog = new Gtk.MessageDialog (get_toplevel () as Gtk.Window, Gtk.DialogFlags.MODAL, Gtk.MessageType.ERROR, Gtk.ButtonsType.OK, e.message);
+					dialog.run ();
+					dialog.destroy ();
+				}
+				return true;
+			}
+		}
+		return false;
 	}
 
 	public void update_tab_label () {
@@ -44,7 +61,11 @@ public class SshMux.Terminal : Vte.Terminal {
 	}
 	public string? get_link (long x, long y) {
 		int tag;
-		return match_check (x / get_char_width (), y / get_char_height (), out tag);
+		unowned Gtk.Border? border;
+		style_get ("inner-border", out border);
+		var x_pos = (x - (border == null ? 0 : border.left)) / get_char_width ();
+		var y_pos = (y - (border == null ? 0 : border.top)) / get_char_height ();
+		return match_check (x_pos, y_pos, out tag);
 	}
 
 	public void resize_tmux () {
