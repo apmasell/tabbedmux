@@ -9,6 +9,11 @@ public class TabbedMux.Application : Gtk.Application {
 		Object (application_id: "name.masella.tabbedmux");
 	}
 
+	/**
+	 * Add a new TMuxStream to the applications menus.
+	 *
+	 * This registers all the appropriate callbacks so the application can handle events from the stream.
+	 */
 	public void add_stream (TMuxStream stream) {
 		if (stream in streams) {
 			return;
@@ -26,6 +31,9 @@ public class TabbedMux.Application : Gtk.Application {
 		message ("Added TMux stream for %s:%s.",  stream.name, stream.session_name);
 	}
 
+	/**
+	 * Deal with a stream dying for any reason.
+	 */
 	private void on_stream_closed (TMuxStream stream, string reason) {
 		streams.remove (stream);
 		try {
@@ -36,6 +44,9 @@ public class TabbedMux.Application : Gtk.Application {
 		}
 	}
 
+	/**
+	 * When a window is created remotely, figure out what GTK+ windw to stick it in.
+	 */
 	private void on_window_created (TMuxWindow tmux_window) {
 		var window = (active_window as Window);
 		if (window == null) {
@@ -44,6 +55,9 @@ public class TabbedMux.Application : Gtk.Application {
 		window.add_window (tmux_window);
 	}
 
+	/**
+	 * On startup, create a TMux on the current system.
+	 */
 	protected override void startup () {
 		base.startup ();
 		try {

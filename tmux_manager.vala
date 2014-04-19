@@ -1,6 +1,9 @@
 namespace TabbedMux {
 	public const string TERM_TYPE = "xterm";
 
+	/**
+	 * The kind of data we expect back from TMux. This controls how the data will be parsed.
+	 */
 	private enum NextOutput {
 		NONE,
 		CAPTURE,
@@ -8,11 +11,17 @@ namespace TabbedMux {
 		WINDOWS
 	}
 
+	/**
+	 * A cookie for future TMux output.
+	 */
 	private class OutputTodo {
 		internal NextOutput action;
 		internal int id;
 	}
 
+	/**
+	 * A TMux session where a subclass will provide a byte stream to talk to that session.
+	 */
 	public abstract class TMuxStream : Object {
 		private Cancellable cancellable = new Cancellable ();
 		private int id = -1;
@@ -33,18 +42,35 @@ namespace TabbedMux {
 			this.session_name = session_name;
 		}
 
+		/**
+		 * Event fired when there is no more data from TMux.
+		 */
 		public virtual signal void connection_closed (string reason) {
 			foreach (var window in windows.values) {
 				window.closed ();
 			}
 		}
+		/**
+		 * Event fired when the TMux session is renamed.
+		 */
 		public signal void renamed ();
+		/**
+		 * Event fired when a new window is created.
+		 *
+		 * The window could be created because of a call to {@create_window} or because another concurrently-connected session created it.
+		 */
 		public signal void window_created (TMuxWindow window);
 
+		/**
+		 * Tell the underlying asynchronous I/O process to stop.
+		 */
 		public void cancel () {
 			cancellable.cancel ();
 		}
 
+		/**
+		 * Create a new TMux window on the server.
+		 */
 		public void create_window () {
 			try {
 				exec ("new-window");
@@ -53,6 +79,9 @@ namespace TabbedMux {
 			}
 		}
 
+		/**
+		 * Blast some data at TMux and register a cookie to handle the output.
+		 */
 		internal void exec (string command, NextOutput output_type = NextOutput.NONE, int window_id = 0) throws IOError {
 			var command_id = ++output_num;
 			message ("%s:%s: Sending command %d: %s", name, session_name, command_id, command);
@@ -64,6 +93,9 @@ namespace TabbedMux {
 			outputs[command_id] = todo;
 		}
 
+		/**
+		 * The “main loop” for handling TMux data.
+		 */
 		private async string process_io () {
 			while (true) {
 				try {
@@ -75,6 +107,9 @@ namespace TabbedMux {
 					var parts = str.split (" ");
 					message ("%s:%s: Processing: %s", name, session_name, parts[0]);
 					switch (parts[0]) {
+					 /*
+					  * TMux sent some kind of data. Find the matching cookie and process the data.
+					  */
 					 case "%begin" :
 						 var output_num = int.parse (parts[2]);
 						 NextOutput action = NextOutput.NONE;
@@ -89,6 +124,9 @@ namespace TabbedMux {
 						 while ((output_line = yield read_line_async (cancellable)) !=  null && !(output_line.has_prefix ("%end") || output_line.has_prefix ("%error"))) {
 
 							 switch (action) {
+							  /*
+							   * A whole window update. Pump through to Vte.
+							   */
 							  case NextOutput.CAPTURE :
 								  if (windows.has_key (window_id)) {
 									  var window = windows[window_id];
@@ -100,11 +138,19 @@ namespace TabbedMux {
 								  }
 								  break;
 
+							  /*
+							   * Our own session ID.
+							   *
+							   * TMux uses numeric session IDs, but we can login with a text one. This lets us get our own ID, so we can correctly identify messages for ourself.
+							   */
 							  case NextOutput.SESSION_ID:
 								  var id = int.parse (output_line);
 								  this.id = id;
 								  break;
 
+							  /*
+							   * A list of windows.
+							   */
 							  case NextOutput.WINDOWS:
 								  message ("%s:%s: Received pane information. %s", name, session_name, output_line);
 								  var info_parts = output_line.split (":");
@@ -151,6 +197,9 @@ namespace TabbedMux {
 						 }
 						 break;
 
+					 /*
+					  * The other end is dying gracefully.
+					  */
 					 case "%exit":
 						 message ("%s:%s: Explicit exit request from TMux.", name, session_name);
 						 if (parts.length > 1) {
@@ -159,10 +208,16 @@ namespace TabbedMux {
 							 return "TMux server shutdown.";
 						 }
 
+					 /*
+					  * Stuff happened in other sessions that is completely immaterial to our lives.
+					  */
 					 case "%sessions-changed":
 					 case "%unlinked-window-add":
 						 break;
 
+					 /*
+					  * Pretty new name.
+					  */
 					 case "%session-renamed":
 						 if (id == parse_window (parts[1])) {
 
@@ -171,11 +226,17 @@ namespace TabbedMux {
 						 }
 						 break;
 
+					 /*
+					  * Something happened that affected the window. Not enough information is provided to do anything, so slot a window list update.
+					  */
 					 case "%session-changed":
 					 case "%window-add":
 						 exec (@"list-windows -t $(Shell.quote(session_name)) -F \"#{window_id}:#{window_width}:#{window_height}:#{window_name}\"", NextOutput.WINDOWS);
 						 break;
 
+					 /*
+					  * Window closed. Kill the tab.
+					  */
 					 case "%window-close":
 						 var window_id = parse_window (parts[1]);
 						 if (windows.has_key (window_id)) {
@@ -185,6 +246,9 @@ namespace TabbedMux {
 						 }
 						 break;
 
+					 /*
+					  * Window renamed. Update tab.
+					  */
 					 case "%window-renamed":
 						 var window_id = parse_window (parts[1]);
 						 if (windows.has_key (window_id)) {
@@ -195,6 +259,9 @@ namespace TabbedMux {
 						 }
 						 break;
 
+					 /*
+					  * Window size changed. Update the terminal size in the tab.
+					  */
 					 case "%layout-change":
 						 var window_id = parse_window (parts[1]);
 						 if (windows.has_key (window_id)) {
@@ -206,6 +273,9 @@ namespace TabbedMux {
 						 }
 						 break;
 
+					 /*
+					  * Pump data to Vte.
+					  */
 					 case "%output":
 						 var window_id = parse_window (parts[1]);
 						 if (windows.has_key (window_id)) {
@@ -227,8 +297,14 @@ namespace TabbedMux {
 			}
 		}
 
+		/**
+		 * A subclass must implement a method to read data from the TMux instance.
+		 */
 		protected abstract async string? read_line_async (Cancellable cancellable) throws Error;
 
+		/**
+		 * Start reading data from TMux.
+		 */
 		public void start () {
 			if (!started) {
 				process_io.begin ((sender, result) => connection_closed (process_io.end (result)));
@@ -241,9 +317,15 @@ namespace TabbedMux {
 			}
 		}
 
+		/**
+		 * A subclass must implement a method to blast data at the TMux instance.
+		 */
 		protected abstract void write (uint8[] data) throws IOError;
 	}
 
+	/**
+	 * A window on the TMux instance, contained in a session.
+	 */
 	public class TMuxWindow : Object {
 		private int id;
 		public unowned TMuxStream stream {
@@ -264,11 +346,26 @@ namespace TabbedMux {
 			this.id = id;
 		}
 
+		/**
+		 * This window has been closed, either because the process has exited or the stream has closed.
+		 */
 		public signal void closed ();
+		/**
+		 * The title has been changed by the remote end.
+		 */
 		public signal void renamed ();
+		/**
+		 * Data has arrived from the process.
+		 */
 		public signal void rx_data (uint8[] data);
+		/**
+		 * The remote end has changed the size of the terminal window (rows and columns).
+		 */
 		public signal void size_changed (int old_width, int old_height);
 
+		/**
+		 * Re-request the contents of the window instead of getting incremenal changes.
+		 */
 		public void refresh () {
 			try {
 				stream.exec (@"capture-pane -p -e -q -J -t @$(id)", NextOutput.CAPTURE, id);
@@ -277,6 +374,11 @@ namespace TabbedMux {
 			}
 		}
 
+		/**
+		 * Tell the remote end the size of the window is changing.
+		 *
+		 * This is sort of shared across all windows in the current stream. It's the maximum size a window can be, but not necessarily the size any window will be.
+		 */
 		public void resize (int width, int height) {
 			if (width == this.width && height == this.height) {
 				return;
@@ -298,6 +400,9 @@ namespace TabbedMux {
 			}
 		}
 
+		/**
+		 * Call this when the user smashes the keyboard.
+		 */
 		public void tx_data (uint8[] text) {
 			try {
 				var command = new StringBuilder ();

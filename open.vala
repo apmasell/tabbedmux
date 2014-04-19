@@ -1,3 +1,6 @@
+/**
+ * Create an open new session dialog
+ */
 [GtkTemplate (ui = "/name/masella/tabbedmux/open.ui")]
 public class TabbedMux.OpenDialog : Gtk.Window {
 	[GtkChild]
@@ -21,6 +24,9 @@ public class TabbedMux.OpenDialog : Gtk.Window {
 		destroy ();
 	}
 
+	/**
+	 * If the user start typying in an SSH-only box, flip the connection type.
+	 */
 	[GtkCallback]
 	private void on_ssh_changed () {
 		if (!remote_connection.active) {
@@ -34,6 +40,9 @@ public class TabbedMux.OpenDialog : Gtk.Window {
 		dialog.destroy ();
 	}
 
+	/**
+	 * Validate the user input, try to create a session (blocking) and then register it with the application.
+	 */
 	[GtkCallback]
 	private void on_connect () {
 		try {

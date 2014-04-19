@@ -35,6 +35,9 @@ void response_callback(
 	*abstract = data;
 }
 
+/*
+ * libssh's interface only allows passing data through the abstract pointer attached to a session and GLib expects to be able to pass a context with the function pointer. This function mediates between the two by taking the context from Vala, shoving it into the session's abstract, has libssh do the above callback, when it rips the data back out of abstract and call the Vala handler.
+ */
 int tabbed_mux_tmux_ssh_stream_password_adapter(
 	LIBSSH2_SESSION * session,
 	const gchar * username,
@@ -56,6 +59,9 @@ int tabbed_mux_tmux_ssh_stream_password_adapter(
 	return result;
 }
 
+/*
+ * Since we've already got a thing for keyboard interactive, make simple passwords just call the keyboard interactive handler.
+ * */
 int tabbed_mux_tmux_ssh_stream_password_simple(
 	LIBSSH2_SESSION * session,
 	const gchar * username,

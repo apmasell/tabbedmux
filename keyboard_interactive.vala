@@ -1,3 +1,6 @@
+/**
+ * Create a GTK dialog populated from libssh keyboard-interactive information.
+ */
 public class KeyboardInteractiveDialog : Gtk.Dialog {
 	public KeyboardInteractiveDialog (Gtk.Window parent, string host) {
 		title = @"Connect $(host)...";

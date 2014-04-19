@@ -1,3 +1,6 @@
+/**
+ * Smart Gtk+ menus that know about the sessions they are associated with.
+ */
 public class TabbedMux.MenuItem : Gtk.MenuItem {
 	public TMuxStream stream {
 		get; private set;
@@ -33,6 +36,10 @@ public class TabbedMux.DisconnectMenuItem : MenuItem {
 		stream.cancel ();
 	}
 }
+
+/**
+ * The main window for holding the set of tabs.
+ */
 [GtkTemplate (ui = "/name/masella/tabbedmux/window.ui")]
 public class TabbedMux.Window : Gtk.ApplicationWindow {
 	[GtkChild]
@@ -44,6 +51,9 @@ public class TabbedMux.Window : Gtk.ApplicationWindow {
 	[GtkChild]
 	private Gtk.Menu disconnect_menu;
 
+	/**
+	 * These are the tabs that haven't been resized. We try to resize lazily since resizing can mangle the information in the remote session.
+	 */
 	private Gee.Set<Terminal> unsized_children = new Gee.HashSet<Terminal> ();
 
 	internal Window (Application app) {
@@ -83,6 +93,9 @@ public class TabbedMux.Window : Gtk.ApplicationWindow {
 		disconnect_menu.@foreach ((widget) => menu_remove (widget, disconnect_menu, stream));
 	}
 
+	/**
+	 * Only have the Edit → Copy menu active if the selection is in the current tab.
+	 */
 	private void on_selection_changed (Vte.Terminal terminal) {
 		if (notebook.get_nth_page (notebook.page) == terminal) {
 			copy_item.sensitive = terminal.get_has_selection ();
@@ -101,6 +114,11 @@ public class TabbedMux.Window : Gtk.ApplicationWindow {
 		show_all ();
 	}
 
+	/**
+	 * Create a “new” window.
+	 *
+	 * This will create one for the TMux stream of the current tab. If the current tab isn't helpful, show a dialog.
+	 */
 	[GtkCallback]
 	private void create_session () {
 		var widget = notebook.get_nth_page (notebook.page) as Terminal;
@@ -121,6 +139,7 @@ public class TabbedMux.Window : Gtk.ApplicationWindow {
 			}
 		}
 	}
+
 	[GtkCallback]
 	private void on_about () {
 		Gtk.show_about_dialog (this,
@@ -131,6 +150,7 @@ public class TabbedMux.Window : Gtk.ApplicationWindow {
 				       "website-label", "GitHub Repository"
 				       );
 	}
+
 	[GtkCallback]
 	private void on_copy () {
 		var widget = notebook.get_nth_page (notebook.page) as Terminal;
@@ -151,6 +171,7 @@ public class TabbedMux.Window : Gtk.ApplicationWindow {
 	private void on_quit () {
 		destroy ();
 	}
+
 	private void on_tmux_window_closed (TMuxWindow tmux_window) {
 		for (var it = 0; it < notebook.get_n_pages (); it++) {
 			var terminal = notebook.get_nth_page (it) as Terminal;
@@ -161,17 +182,20 @@ public class TabbedMux.Window : Gtk.ApplicationWindow {
 			}
 		}
 	}
+
 	[GtkCallback]
 	private void page_removed () {
 		if (notebook.get_n_pages () == 0) {
 			close ();
 		}
 	}
+
 	[GtkCallback]
 	private void page_switched (Gtk.Widget widget, uint index) {
 		var terminal = widget as Terminal;
 		if (terminal != null) {
 			message ("Switched terminal.");
+			/* If we've switched to a terminal that doesn't know about the size of the window, force it to resize. */
 			if (terminal in unsized_children) {
 				terminal.resize_tmux ();
 				unsized_children.remove (terminal);
@@ -181,6 +205,10 @@ public class TabbedMux.Window : Gtk.ApplicationWindow {
 			message ("Non-terminal found in window.");
 		}
 	}
+
+	/**
+	 * Force redrawing the terminal on the remote end.
+	 */
 	[GtkCallback]
 	private void refresh_tab () {
 		var widget = notebook.get_nth_page (notebook.page) as Terminal;
@@ -188,6 +216,10 @@ public class TabbedMux.Window : Gtk.ApplicationWindow {
 			widget.tmux_window.refresh ();
 		}
 	}
+
+	/**
+	 * When the container changes, resize the selected tab and mark that all the others are “the wrong size”.
+	 */
 	public override bool configure_event (Gdk.EventConfigure event) {
 		var result = base.configure_event (event);
 		if (event.type == Gdk.EventType.CONFIGURE) {

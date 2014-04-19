@@ -1,3 +1,6 @@
+/**
+ * Extend Vte to be wired to a TMuxWindow.
+ */
 public class TabbedMux.Terminal : Vte.Terminal {
 	public TMuxWindow tmux_window {
 		get; private set;
@@ -25,6 +28,9 @@ public class TabbedMux.Terminal : Vte.Terminal {
 		tmux_window.size_changed.connect (unowned_this.set_size_from_tmux);
 	}
 
+	/**
+	 * Capture URL events and dispatch the rest to Vte.
+	 */
 	public override bool button_press_event (Gdk.EventButton event) {
 		if (event.type == Gdk.EventType.BUTTON_PRESS && event.button == 1) {
 			var url = get_link ((long) event.x, (long) event.y);
@@ -49,16 +55,23 @@ public class TabbedMux.Terminal : Vte.Terminal {
 		queue_draw ();
 	}
 
+	/**
+	 * Pump Vte keyboard data to TMux.
+	 */
 	public override void commit (string text, uint size) {
 		tmux_window.tx_data (text.data);
 	}
 
+	/**
+	 * When this thing gets originally laied out, the moon is waxing, and Mercury is in Ares, tell the remote TMux our size.
+	 */
 	public override bool map_event (Gdk.EventAny event) {
 		if (event.type == Gdk.EventType.MAP) {
 			resize_tmux ();
 		}
 		return false;
 	}
+
 	public string? get_link (long x, long y) {
 		int tag;
 		unowned Gtk.Border? border;
