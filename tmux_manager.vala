@@ -1,4 +1,4 @@
-namespace SshMux {
+namespace TabbedMux {
 	public const string TERM_TYPE = "xterm";
 
 	private enum NextOutput {

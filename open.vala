@@ -1,5 +1,5 @@
-[GtkTemplate (ui = "/name/masella/sshmux/open.ui")]
-public class SshMux.OpenDialog : Gtk.Window {
+[GtkTemplate (ui = "/name/masella/tabbedmux/open.ui")]
+public class TabbedMux.OpenDialog : Gtk.Window {
 	[GtkChild]
 	private Gtk.RadioButton remote_connection;
 	[GtkChild]

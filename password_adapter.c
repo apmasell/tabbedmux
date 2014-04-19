@@ -3,7 +3,7 @@
 #include<string.h>
 
 typedef void (
-	*SshMuxTMuxSshStreamInteractiveAuthentication) (
+	*TabbedMuxTMuxSshStreamInteractiveAuthentication) (
 	const gchar * username,
 	const gchar * instruction,
 	const LIBSSH2_USERAUTH_KBDINT_PROMPT * prompts,
@@ -13,7 +13,7 @@ typedef void (
 	void *user_data);
 
 struct delegate_data {
-	SshMuxTMuxSshStreamInteractiveAuthentication handler;
+	TabbedMuxTMuxSshStreamInteractiveAuthentication handler;
 	void *handler_target;
 	void *original_abstract;
 };
@@ -35,10 +35,10 @@ void response_callback(
 	*abstract = data;
 }
 
-int ssh_mux_tmux_ssh_stream_password_adapter(
+int tabbed_mux_tmux_ssh_stream_password_adapter(
 	LIBSSH2_SESSION * session,
 	const gchar * username,
-	SshMuxTMuxSshStreamInteractiveAuthentication handler,
+	TabbedMuxTMuxSshStreamInteractiveAuthentication handler,
 	void *handler_target) {
 	void **abstract;
 	int result;
@@ -56,10 +56,10 @@ int ssh_mux_tmux_ssh_stream_password_adapter(
 	return result;
 }
 
-int ssh_mux_tmux_ssh_stream_password_simple(
+int tabbed_mux_tmux_ssh_stream_password_simple(
 	LIBSSH2_SESSION * session,
 	const gchar * username,
-	SshMuxTMuxSshStreamInteractiveAuthentication handler,
+	TabbedMuxTMuxSshStreamInteractiveAuthentication handler,
 	void *handler_target) {
 
 	LIBSSH2_USERAUTH_KBDINT_PROMPT prompt;

@@ -1,4 +1,4 @@
-public class SshMux.MenuItem : Gtk.MenuItem {
+public class TabbedMux.MenuItem : Gtk.MenuItem {
 	public TMuxStream stream {
 		get; private set;
 	}
@@ -14,7 +14,7 @@ public class SshMux.MenuItem : Gtk.MenuItem {
 		set_label (@"$(stream.session_name) - $(stream.name)");
 	}
 }
-public class SshMux.NewMenuItem : MenuItem {
+public class TabbedMux.NewMenuItem : MenuItem {
 	public NewMenuItem (TMuxStream stream) {
 		base (stream);
 	}
@@ -24,7 +24,7 @@ public class SshMux.NewMenuItem : MenuItem {
 	}
 }
 
-public class SshMux.DisconnectMenuItem : MenuItem {
+public class TabbedMux.DisconnectMenuItem : MenuItem {
 	public DisconnectMenuItem (TMuxStream stream) {
 		base (stream);
 	}
@@ -33,8 +33,8 @@ public class SshMux.DisconnectMenuItem : MenuItem {
 		stream.cancel ();
 	}
 }
-[GtkTemplate (ui = "/name/masella/sshmux/window.ui")]
-public class SshMux.Window : Gtk.ApplicationWindow {
+[GtkTemplate (ui = "/name/masella/tabbedmux/window.ui")]
+public class TabbedMux.Window : Gtk.ApplicationWindow {
 	[GtkChild]
 	private Gtk.MenuItem copy_item;
 	[GtkChild]
@@ -47,7 +47,7 @@ public class SshMux.Window : Gtk.ApplicationWindow {
 	private Gee.Set<Terminal> unsized_children = new Gee.HashSet<Terminal> ();
 
 	internal Window (Application app) {
-		Object (application: app, title: "SSHMux", show_menubar: true);
+		Object (application: app, title: "TabbedMux", show_menubar: true);
 		add_events (Gdk.EventMask.STRUCTURE_MASK | Gdk.EventMask.SUBSTRUCTURE_MASK);
 		this.set_default_size (600, 400);
 		if (app is Application) {
@@ -124,10 +124,10 @@ public class SshMux.Window : Gtk.ApplicationWindow {
 	[GtkCallback]
 	private void on_about () {
 		Gtk.show_about_dialog (this,
-				       "program-name", "SshMux",
+				       "program-name", "TabbedMux",
 				       "copyright", "Copyright 2013-2014 Andre Masella",
 				       "authors", new string[] { "Andre Masella" },
-				       "website", "https://github.com/apmasell/sshmux",
+				       "website", "https://github.com/apmasell/tabbedmux",
 				       "website-label", "GitHub Repository"
 				       );
 	}

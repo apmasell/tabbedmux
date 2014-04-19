@@ -1,4 +1,4 @@
-namespace SshMux {
+namespace TabbedMux {
 	internal class TMuxSshStream : TMuxStream {
 		Socket socket;
 		SSH2.Session session;

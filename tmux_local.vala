@@ -1,4 +1,4 @@
-namespace SshMux {
+namespace TabbedMux {
 	public class TMuxLocalStream : TMuxStream {
 		DataInputStream input;
 		UnixOutputStream output;

@@ -1,10 +1,10 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <interface>
   <!-- interface-requires gtk+ 3.0 -->
-  <template class="SshMuxWindow" parent="GtkApplicationWindow">
+  <template class="TabbedMuxWindow" parent="GtkApplicationWindow">
     <property name="can_focus">False</property>
     <property name="has_resize_grip">True</property>
-    <property name="title" translatable="yes">SshMux</property>
+    <property name="title" translatable="yes">TabbedMux</property>
     <child>
       <object class="GtkBox" id="box">
         <property name="visible">True</property>
@@ -33,7 +33,7 @@
                         <property name="can_focus">False</property>
                         <property name="use_underline">True</property>
                         <property name="use_stock">True</property>
-                        <signal name="activate" handler="create_session" object="SshMuxWindow" swapped="no"/>
+                        <signal name="activate" handler="create_session" object="TabbedMuxWindow" swapped="no"/>
                       </object>
                     </child>
                     <child>
@@ -58,7 +58,7 @@
                         <property name="can_focus">False</property>
                         <property name="use_underline">True</property>
                         <property name="use_stock">True</property>
-                        <signal name="activate" handler="add_stream" object="SshMuxWindow" swapped="no"/>
+                        <signal name="activate" handler="add_stream" object="TabbedMuxWindow" swapped="no"/>
                       </object>
                     </child>
                     <child>
@@ -90,7 +90,7 @@
                         <property name="can_focus">False</property>
                         <property name="use_underline">True</property>
                         <property name="use_stock">True</property>
-                        <signal name="activate" handler="on_quit" object="SshMuxWindow" swapped="no"/>
+                        <signal name="activate" handler="on_quit" object="TabbedMuxWindow" swapped="no"/>
                       </object>
                     </child>
                   </object>
@@ -116,7 +116,7 @@
                         <property name="can_focus">False</property>
                         <property name="use_underline">True</property>
                         <property name="use_stock">True</property>
-                        <signal name="activate" handler="on_copy" object="SshMuxWindow" swapped="no"/>
+                        <signal name="activate" handler="on_copy" object="TabbedMuxWindow" swapped="no"/>
                       </object>
                     </child>
                     <child>
@@ -127,7 +127,7 @@
                         <property name="can_focus">False</property>
                         <property name="use_underline">True</property>
                         <property name="use_stock">True</property>
-                        <signal name="activate" handler="on_paste" object="SshMuxWindow" swapped="no"/>
+                        <signal name="activate" handler="on_paste" object="TabbedMuxWindow" swapped="no"/>
                       </object>
                     </child>
                     <child>
@@ -138,7 +138,7 @@
                         <property name="can_focus">False</property>
                         <property name="use_underline">True</property>
                         <property name="use_stock">True</property>
-                        <signal name="activate" handler="refresh_tab" object="SshMuxWindow" swapped="no"/>
+                        <signal name="activate" handler="refresh_tab" object="TabbedMuxWindow" swapped="no"/>
                       </object>
                     </child>
                   </object>
@@ -164,7 +164,7 @@
                         <property name="can_focus">False</property>
                         <property name="use_underline">True</property>
                         <property name="use_stock">True</property>
-                        <signal name="activate" handler="on_about" object="SshMuxWindow" swapped="no"/>
+                        <signal name="activate" handler="on_about" object="TabbedMuxWindow" swapped="no"/>
                       </object>
                     </child>
                   </object>
@@ -185,8 +185,8 @@
             <property name="hexpand">True</property>
             <property name="vexpand">True</property>
             <property name="resize_mode">parent</property>
-            <signal name="switch_page" handler="page_switched" object="SshMuxWindow" swapped="no"/>
-            <signal name="page_removed" handler="page_removed" object="SshMuxWindow" swapped="no"/>
+            <signal name="switch_page" handler="page_switched" object="TabbedMuxWindow" swapped="no"/>
+            <signal name="page_removed" handler="page_removed" object="TabbedMuxWindow" swapped="no"/>
           </object>
           <packing>
             <property name="expand">False</property>

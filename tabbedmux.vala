@@ -1,6 +1,6 @@
-namespace SshMux {
+namespace TabbedMux {
 	public int main (string[] args) {
-		Notify.init ("SshMux");
+		Notify.init ("TabbedMux");
 		return new Application ().run (args);
 	}
 }

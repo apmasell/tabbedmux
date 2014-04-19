@@ -1,4 +1,4 @@
-public class SshMux.Application : Gtk.Application {
+public class TabbedMux.Application : Gtk.Application {
 	internal Gee.Set<TMuxStream> streams = new Gee.HashSet<TMuxStream> ();
 
 	protected override void activate () {
@@ -6,7 +6,7 @@ public class SshMux.Application : Gtk.Application {
 	}
 
 	internal Application () {
-		Object (application_id: "name.masella.SSHMux");
+		Object (application_id: "name.masella.tabbedmux");
 	}
 
 	public void add_stream (TMuxStream stream) {

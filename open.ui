@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <interface>
   <!-- interface-requires gtk+ 3.0 -->
-  <template class="SshMuxOpenDialog" parent="GtkWindow">
+  <template class="TabbedMuxOpenDialog" parent="GtkWindow">
     <property name="title" translatable="yes">Open Connection</property>
     <property name="type-hint">dialog</property>
     <child>
@@ -129,7 +129,7 @@
                 <property name="visible">True</property>
                 <property name="can_focus">True</property>
                 <property name="invisible_char">•</property>
-                <signal name="changed" handler="on_ssh_changed" object="SshMuxOpenDialog" swapped="no"/>
+                <signal name="changed" handler="on_ssh_changed" object="TabbedMuxOpenDialog" swapped="no"/>
               </object>
               <packing>
                 <property name="left_attach">2</property>
@@ -143,7 +143,7 @@
                 <property name="visible">True</property>
                 <property name="can_focus">True</property>
                 <property name="invisible_char">•</property>
-                <signal name="changed" handler="on_ssh_changed" object="SshMuxOpenDialog" swapped="no"/>
+                <signal name="changed" handler="on_ssh_changed" object="TabbedMuxOpenDialog" swapped="no"/>
               </object>
               <packing>
                 <property name="left_attach">2</property>
@@ -157,7 +157,7 @@
                 <property name="visible">True</property>
                 <property name="can_focus">True</property>
                 <property name="invisible_char">•</property>
-                <signal name="changed" handler="on_ssh_changed" object="SshMuxOpenDialog" swapped="no"/>
+                <signal name="changed" handler="on_ssh_changed" object="TabbedMuxOpenDialog" swapped="no"/>
               </object>
               <packing>
                 <property name="left_attach">2</property>
@@ -186,7 +186,7 @@
                 <property name="can_focus">True</property>
                 <property name="receives_default">True</property>
                 <property name="use_action_appearance">False</property>
-                <signal name="clicked" handler="on_connect" object="SshMuxOpenDialog" swapped="no"/>
+                <signal name="clicked" handler="on_connect" object="TabbedMuxOpenDialog" swapped="no"/>
               </object>
               <packing>
                 <property name="expand">False</property>
@@ -202,7 +202,7 @@
                 <property name="can_focus">True</property>
                 <property name="receives_default">True</property>
                 <property name="use_action_appearance">False</property>
-                <signal name="clicked" handler="on_cancel" object="SshMuxOpenDialog" swapped="no"/>
+                <signal name="clicked" handler="on_cancel" object="TabbedMuxOpenDialog" swapped="no"/>
               </object>
               <packing>
                 <property name="expand">False</property>

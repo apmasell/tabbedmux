@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <gresources>
-  <gresource prefix="/name/masella/sshmux">
+  <gresource prefix="/name/masella/tabbedmux">
     <file compressed="true" preprocess="xml-stripblanks">open.ui</file>
     <file compressed="true" preprocess="xml-stripblanks">window.ui</file>
   </gresource>

@@ -1,4 +1,4 @@
-public class SshMux.Terminal : Vte.Terminal {
+public class TabbedMux.Terminal : Vte.Terminal {
 	public TMuxWindow tmux_window {
 		get; private set;
 	}
