@@ -1,4 +1,6 @@
 NULL = 
+PREFIX ?= /usr
+DESTDIR ?= 
 
 SOURCES = \
 	application.vala \
@@ -25,3 +27,8 @@ resources.c: resources.xml $(shell $(GLIB_COMPILE_RESOURCES) --generate-dependen
 
 clean:
 	rm -f $(patsubst %.vala, %.c, $(filter %.vala, $(SOURCES))) resources.c tabbedmux
+
+install:
+	install -D tabbedmux $(DESTDIR)$(PREFIX)/bin/tabbedmux
+
+.PHONY: clean  install
