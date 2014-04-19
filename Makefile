@@ -30,5 +30,6 @@ clean:
 
 install:
 	install -D tabbedmux $(DESTDIR)$(PREFIX)/bin/tabbedmux
+	install -D tabbedmux.desktop $(DESTDIR)$(PREFIX)/share/applications
 
 .PHONY: clean  install

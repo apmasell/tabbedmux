@@ -1,0 +1,10 @@
+[Desktop Entry]
+Type=Application
+Exec=tabbedmux
+Icon=utilities-terminal
+Terminal=false
+Categories=GTK;System;TerminalEmulator;
+
+Name=Tabbed Mux
+
+GenericName=Remote Terminal Multiplexer
