@@ -32,7 +32,7 @@ public class SshMux.Terminal : Vte.Terminal {
 				try {
 					AppInfo.launch_default_for_uri (url, null);
 				} catch (Error e) {
-					var dialog = new Gtk.MessageDialog (get_toplevel () as Gtk.Window, Gtk.DialogFlags.MODAL, Gtk.MessageType.ERROR, Gtk.ButtonsType.OK, e.message);
+					var dialog = new Gtk.MessageDialog (get_toplevel () as Gtk.Window, Gtk.DialogFlags.MODAL, Gtk.MessageType.ERROR, Gtk.ButtonsType.OK, "%s", e.message);
 					dialog.run ();
 					dialog.destroy ();
 				}

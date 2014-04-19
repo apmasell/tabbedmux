@@ -29,7 +29,7 @@ public class SshMux.OpenDialog : Gtk.Window {
 	}
 
 	private void show_error (string message) {
-		var dialog = new Gtk.MessageDialog (this, Gtk.DialogFlags.MODAL,  Gtk.MessageType.ERROR, Gtk.ButtonsType.OK, message);
+		var dialog = new Gtk.MessageDialog (this, Gtk.DialogFlags.MODAL, Gtk.MessageType.ERROR, Gtk.ButtonsType.OK, "%s", message);
 		dialog.run ();
 		dialog.destroy ();
 	}
