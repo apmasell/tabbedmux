@@ -1,5 +1,8 @@
-*~
 *.c
 *.gresource
-!password_adapter.c
+*~
+debian/*.log
+debian/*.substvars
+debian/files
 tabbedmux
+!password_adapter.c
