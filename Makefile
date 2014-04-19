@@ -16,7 +16,7 @@ SOURCES = \
 	$(NULL)
 
 sshmux: $(SOURCES)
-	valac -v --debug --target-glib=2.38 --save-temps --vapidir vapi --pkg libssh2 --pkg gtk+-3.0 --pkg gee-0.8 --pkg gio-unix-2.0 --pkg libnotify --pkg vte-2.90 $^ --gresources resources.xml -o $@
+	valac -v --debug --target-glib=2.38 --save-temps --vapidir vapis --pkg libssh2 --pkg gtk+-3.0 --pkg gee-0.8 --pkg gio-unix-2.0 --pkg libnotify --pkg vte-2.90 $^ --gresources resources.xml -o $@
 
 GLIB_COMPILE_RESOURCES=glib-compile-resources
 
