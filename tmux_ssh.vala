@@ -13,6 +13,7 @@ namespace TabbedMux {
 		}
 
 		~TMuxSshStream () {
+			/* To make libssh happy, the channel must be destroyed before the session. */
 			channel = null;
 			session = null;
 		}
