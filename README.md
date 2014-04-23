@@ -30,7 +30,7 @@ For everyone else:
 BUGS
 ----
 
-The TMux library has an issue that can cause multiple sessions to blend together. Since most users don't use this feature, it's not a big deal. http://sourceforge.net/p/tmux/tickets/94/
+The TMux library has an issue that can cause multiple sessions to blend together. Since most users don't use this feature, it's not a big deal. It's fixed after 1.9. http://sourceforge.net/p/tmux/tickets/94/
 
 Occasionally, stuff comes back from no apparent session and TabbedMux will create a dead tab.
 

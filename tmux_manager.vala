@@ -213,6 +213,8 @@ namespace TabbedMux {
 					  */
 					 case "%sessions-changed":
 					 case "%unlinked-window-add":
+					 case "%unlinked-window-rename":
+					 case "%unlinked-window-delete":
 						 break;
 
 					 /*

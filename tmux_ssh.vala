@@ -68,7 +68,7 @@ internal class TabbedMux.TMuxSshStream : TMuxStream {
 	}
 
 	protected override void write (uint8[] data) throws IOError {
-		/* To make life remote sane, writes a blocking while reads are non-blocking. In theory, we shouldn't block in the Gtk+ thread, but we write sufficiently little data that the writes complete immediately and this simplifies the code. */
+		/* To make life remote sane, writes are blocking while reads are non-blocking. In theory, we shouldn't block in the Gtk+ thread, but we write sufficiently little data that the writes complete immediately and this simplifies the code. */
 		session.blocking = true;
 		var result = channel.write (data);
 		session.blocking = false;
