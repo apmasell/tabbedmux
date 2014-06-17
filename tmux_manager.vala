@@ -382,7 +382,7 @@ namespace TabbedMux {
 		 * This is sort of shared across all windows in the current stream. It's the maximum size a window can be, but not necessarily the size any window will be.
 		 */
 		public void resize (int width, int height) {
-			if (width == this.width && height == this.height) {
+			if (width == this.width && height == this.height || width == 10 && height == 10) {
 				return;
 			}
 			try {
