@@ -26,6 +26,7 @@ public class TabbedMux.Terminal : Vte.Terminal {
 		tmux_window.stream.renamed.connect (unowned_this.update_tab_label);
 		tmux_window.rx_data.connect (unowned_this.feed);
 		tmux_window.size_changed.connect (unowned_this.set_size_from_tmux);
+		update_tab_label ();
 	}
 
 	/**
