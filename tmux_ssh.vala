@@ -8,11 +8,24 @@ internal class TabbedMux.TMuxSshStream : TMuxStream {
 	SocketSource? source = null;
 	StringBuilder buffer = new StringBuilder ();
 
-	internal TMuxSshStream (string name, string session_name, Socket socket, owned SSH2.Session session, owned SSH2.Channel channel) {
-		base (name, session_name);
+	public string host {
+		get; private set;
+	}
+	public uint16 port {
+		get; private set;
+	}
+	public string username {
+		get; private set;
+	}
+
+	internal TMuxSshStream (string session_name, string host, uint16 port, string username, Socket socket, owned SSH2.Session session, owned SSH2.Channel channel) {
+		base (port == 22 ? @"$(username)@$(host)" : @"$(username)@$(host):$(port)", session_name);
 		this.session = (owned) session;
 		this.channel = (owned) channel;
 		this.socket = socket;
+		this.host = host;
+		this.port = port;
+		this.username = username;
 	}
 
 	~TMuxSshStream () {
@@ -185,7 +198,6 @@ internal class TabbedMux.TMuxSshStream : TMuxStream {
 		 * Create an Stream and return it.
 		 */
 		session.blocking = false;
-		var name = port == 22 ? @"$(username)@$(host)" : @"$(username)@$(host):$(port)";
-		return new TMuxSshStream (name, session_name, socket, (owned) session, (owned) channel);
+		return new TMuxSshStream (session_name, host, port, username, socket, (owned) session, (owned) channel);
 	}
 }
