@@ -13,6 +13,7 @@ SOURCES = \
 	tmux_local.vala \
 	tmux_manager.vala \
 	tmux_ssh.vala \
+	util.vala \
 	window.vala \
 	$(NULL)
 

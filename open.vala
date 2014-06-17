@@ -34,12 +34,6 @@ public class TabbedMux.OpenDialog : Gtk.Window {
 		}
 	}
 
-	private void show_error (string message) {
-		var dialog = new Gtk.MessageDialog (this, Gtk.DialogFlags.MODAL, Gtk.MessageType.ERROR, Gtk.ButtonsType.OK, "%s", message);
-		dialog.run ();
-		dialog.destroy ();
-	}
-
 	/**
 	 * Validate the user input, try to create a session (blocking) and then register it with the application.
 	 */
@@ -49,7 +43,7 @@ public class TabbedMux.OpenDialog : Gtk.Window {
 			TMuxStream stream;
 			string session_name = session.text;
 			if (":" in session_name) {
-				show_error ("Session names may not contain colons.");
+				show_error (this, "Session names may not contain colons.");
 				return;
 			}
 			if (session_name.length == 0) {
@@ -58,7 +52,7 @@ public class TabbedMux.OpenDialog : Gtk.Window {
 			if (remote_connection.active) {
 				var hostname = host.text.strip ();
 				if (hostname.length == 0) {
-					show_error ("Host is missing.");
+					show_error (this, "Host is missing.");
 					return;
 				}
 
@@ -66,11 +60,11 @@ public class TabbedMux.OpenDialog : Gtk.Window {
 				var port_text = port.text.strip ();
 				if (port_text.length != 0) {
 					if (!uint64.try_parse (port.text.strip (), out port_number)) {
-						show_error ("Port is too large.");
+						show_error (this, "Port is too large.");
 						return;
 					}
 					if (port_number > short.MAX) {
-						show_error ("Port is too large.");
+						show_error (this, "Port is too large.");
 						return;
 					}
 				}
@@ -84,12 +78,12 @@ public class TabbedMux.OpenDialog : Gtk.Window {
 				stream = TMuxLocalStream.open (session.text);
 			}
 			if (stream == null) {
-				show_error ("Could not connect.");
+				show_error (this, "Could not connect.");
 			} else {
 				((Application) application).add_stream (stream);
 			}
 		} catch (Error e) {
-			show_error (e.message);
+			show_error (this, e.message);
 		}
 		destroy ();
 	}
