@@ -41,7 +41,7 @@ public class TabbedMux.OpenDialog : Gtk.Window {
 	private void on_connect () {
 		try {
 			TMuxStream stream;
-			string session_name = session.text;
+			string session_name = session.text.strip();
 			if (":" in session_name) {
 				show_error (this, "Session names may not contain colons.");
 				return;
@@ -75,7 +75,7 @@ public class TabbedMux.OpenDialog : Gtk.Window {
 				var keybd_dialog = new KeyboardInteractiveDialog (this, host.text);
 				stream = TMuxSshStream.open (session_name, host.text, (short) port_number, username, keybd_dialog.respond);
 			} else {
-				stream = TMuxLocalStream.open (session.text);
+				stream = TMuxLocalStream.open (session_name);
 			}
 			if (stream == null) {
 				show_error (this, "Could not connect.");
