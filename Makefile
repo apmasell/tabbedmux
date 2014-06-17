@@ -9,7 +9,6 @@ SOURCES = \
 	password_adapter.c \
 	resources.c \
 	tabbedmux.vala \
-	open.vala \
 	terminal.vala \
 	tmux_local.vala \
 	tmux_manager.vala \
