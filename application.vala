@@ -1,5 +1,6 @@
 public class TabbedMux.Application : Gtk.Application {
 	internal Gee.Set<TMuxStream> streams = new Gee.HashSet<TMuxStream> ();
+	internal SavedSessions saved_sessions;
 
 	protected override void activate () {
 		new Window (this).show_all ();
@@ -7,6 +8,7 @@ public class TabbedMux.Application : Gtk.Application {
 
 	internal Application () {
 		Object (application_id: "name.masella.tabbedmux");
+		saved_sessions = new SavedSessions (application_id);
 	}
 
 	/**

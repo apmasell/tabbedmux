@@ -8,6 +8,7 @@ SOURCES = \
 	open.vala \
 	password_adapter.c \
 	resources.c \
+	saved_sessions.vala \
 	tabbedmux.vala \
 	terminal.vala \
 	tmux_local.vala \
@@ -31,5 +32,7 @@ clean:
 install:
 	install -D tabbedmux $(DESTDIR)$(PREFIX)/bin/tabbedmux
 	install -D tabbedmux.desktop $(DESTDIR)$(PREFIX)/share/applications
+	install -D name.masella.tabbedmux.gschema.xml $(DESTDIR)$(PREFIX)/share/glib-2.0/schemas
+	glib-compile-schemas $(DESTDIR)$(PREFIX)/share/glib-2.0/schemas
 
 .PHONY: clean  install

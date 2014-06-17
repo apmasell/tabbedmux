@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<schemalist>
+  <schema path="/name/masella/tabbedmux/" id="name.masella.tabbedmux">
+    <key name="saved-ssh" type="a(ssqs)">
+      <default>[]</default>
+      <summary>SSH Sessions</summary>
+      <description>A list of remote SSH sessions to connect. Each one has a username, host, port, and TMux session name.</description>
+    </key>
+    <key name="saved-local" type="as">
+      <default>[]</default>
+      <summary>Local Sessions</summary>
+      <description>A list of local sessions to connect.</description>
+    </key>
+  </schema>
+</schemalist>

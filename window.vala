@@ -17,6 +17,7 @@ public class TabbedMux.MenuItem : Gtk.MenuItem {
 		set_label (@"$(stream.session_name) - $(stream.name)");
 	}
 }
+
 public class TabbedMux.NewMenuItem : MenuItem {
 	public NewMenuItem (TMuxStream stream) {
 		base (stream);
@@ -50,6 +51,8 @@ public class TabbedMux.Window : Gtk.ApplicationWindow {
 	private Gtk.Notebook notebook;
 	[GtkChild]
 	private Gtk.Menu disconnect_menu;
+	[GtkChild]
+	private Gtk.Menu saved_menu;
 
 	/**
 	 * These are the tabs that haven't been resized. We try to resize lazily since resizing can mangle the information in the remote session.
@@ -64,6 +67,24 @@ public class TabbedMux.Window : Gtk.ApplicationWindow {
 			foreach (var stream in ((Application) app).streams) {
 				add_new_stream (stream);
 			}
+			var saved_sessions = ((Application) app).saved_sessions;
+			saved_sessions.changed.connect (this.on_saved_changed);
+			on_saved_changed (saved_sessions);
+		}
+	}
+
+	private void on_saved_changed (SavedSessions sender) {
+		if (application is Application) {
+			sender.update (saved_menu, (item) => {
+					       foreach (var stream in ((Application) application).streams) {
+						       if (item.matches (stream)) {
+							       return true;
+						       }
+					       }
+					       return false;
+				       });
+		} else {
+			sender.update (saved_menu, (item) => true);
 		}
 	}
 
