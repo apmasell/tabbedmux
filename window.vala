@@ -128,11 +128,12 @@ public class TabbedMux.Window : Gtk.ApplicationWindow {
 		unowned Window unowned_this = this;
 		// TODO disconnect on close
 		window.closed.connect (unowned_this.on_tmux_window_closed);
-		notebook.append_page (terminal, terminal.tab_label);
+		var id = notebook.append_page (terminal, terminal.tab_label);
 		notebook.set_tab_reorderable (terminal, true);
 		terminal.selection_changed.connect (unowned_this.on_selection_changed);
 		message ("Adding window from %s.", window.stream.name);
 		show_all ();
+		notebook.set_current_page(id);
 	}
 
 	/**
