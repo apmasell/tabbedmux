@@ -54,7 +54,7 @@ public class TabbedMux.Application : Gtk.Application {
 		if (window == null) {
 			critical ("Unknown window type active.");
 		}
-		window.add_window (tmux_window);
+		((!)window).add_window (tmux_window);
 	}
 
 	/**
@@ -63,7 +63,10 @@ public class TabbedMux.Application : Gtk.Application {
 	protected override void startup () {
 		base.startup ();
 		try {
-			add_stream (TMuxLocalStream.open ("0"));
+			var stream = TMuxLocalStream.open ("0");
+			if (stream != null) {
+				add_stream ((!)stream);
+			}
 		} catch (Error e) {
 			critical (e.message);
 		}

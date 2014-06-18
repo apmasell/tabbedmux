@@ -54,8 +54,8 @@ internal class TabbedMux.TMuxSshStream : TMuxStream {
 				 */
 				SourceFunc async_continue = read_line_async.callback;
 				source = socket.create_source (IOCondition.IN, cancellable);
-				source.set_callback ((socket, condition) => { async_continue (); return false; });
-				source.attach (MainContext.default ());
+				((!)source).set_callback ((socket, condition) => { async_continue (); return false; });
+				((!)source).attach (MainContext.default ());
 				yield;
 				source = null;
 				/* Once the socket has data, we will continue from this point. */
@@ -101,14 +101,14 @@ internal class TabbedMux.TMuxSshStream : TMuxStream {
 	 */
 	private static bool do_public_key_auth (SSH2.Session connection, string username, string host, uint16 port) {
 		var agent = connection.create_agent ();
-		if (agent != null && agent.list_identities () != SSH2.Error.NONE) {
+		if (agent != null && ((!)agent).list_identities () != SSH2.Error.NONE) {
 			unowned SSH2.AgentKey? key = null;
-			while (agent.next (out key, key) == SSH2.Error.NONE) {
-				if (agent.user_auth (username, key) == SSH2.Error.NONE) {
-					message ("Authentication succeeded for %s@%s:%hu with %s.", username, host, port, key.comment);
+			while (((!)agent).next (out key, key) == SSH2.Error.NONE) {
+				if (((!)agent).user_auth (username, (!)key) == SSH2.Error.NONE) {
+					message ("Authentication succeeded for %s@%s:%hu with %s.", username, host, port, ((!)key).comment ?? "unknown");
 					return true;
 				} else {
-					message ("Authentication failed for %s@%s:%hu with %s.", username, host, port, key.comment);
+					message ("Authentication failed for %s@%s:%hu with %s.", username, host, port, ((!)key).comment ?? "unknown");
 				}
 			}
 		} else {
@@ -163,13 +163,13 @@ internal class TabbedMux.TMuxSshStream : TMuxStream {
 
 			 case "keyboard-interactive" :
 				 if (get_password != null) {
-					 password_adapter (session, username, get_password);
+					 password_adapter (session, username, (!)get_password);
 				 }
 				 break;
 
 			 case "password" :
 				 if (get_password != null) {
-					 password_simple (session, username, get_password);
+					 password_simple (session, username, (!)get_password);
 				 }
 				 break;
 
@@ -192,7 +192,7 @@ internal class TabbedMux.TMuxSshStream : TMuxStream {
 		}
 		var command = @"TERM=$(TERM_TYPE) tmux -C new -A -s $(Shell.quote(session_name))";
 		message ("%s@%s:%d:%s: executing %s", username, host, port, session_name, command);
-		if (channel.start_command (command) != SSH2.Error.NONE) {
+		if (((!)channel).start_command (command) != SSH2.Error.NONE) {
 			char[] error_message;
 			session.get_last_error (out error_message);
 			throw new IOError.INVALID_DATA ((string) error_message);
@@ -201,6 +201,6 @@ internal class TabbedMux.TMuxSshStream : TMuxStream {
 		 * Create an Stream and return it.
 		 */
 		session.blocking = false;
-		return new TMuxSshStream (session_name, host, port, username, socket, (owned) session, (owned) channel);
+		return new TMuxSshStream (session_name, host, port, username, socket, (!)(owned) session, (!)(owned) channel);
 	}
 }

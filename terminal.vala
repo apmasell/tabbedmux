@@ -37,7 +37,7 @@ public class TabbedMux.Terminal : Vte.Terminal {
 			var url = get_link ((long) event.x, (long) event.y);
 			if (url != null) {
 				try {
-					AppInfo.launch_default_for_uri (url, null);
+					AppInfo.launch_default_for_uri ((!)url, null);
 				} catch (Error e) {
 					var dialog = new Gtk.MessageDialog (get_toplevel () as Gtk.Window, Gtk.DialogFlags.MODAL, Gtk.MessageType.ERROR, Gtk.ButtonsType.OK, "%s", e.message);
 					dialog.run ();
@@ -77,8 +77,8 @@ public class TabbedMux.Terminal : Vte.Terminal {
 		int tag;
 		unowned Gtk.Border? border;
 		style_get ("inner-border", out border);
-		var x_pos = (x - (border == null ? 0 : border.left)) / get_char_width ();
-		var y_pos = (y - (border == null ? 0 : border.top)) / get_char_height ();
+		var x_pos = (x - (border == null ? 0 : ((!)border).left)) / get_char_width ();
+		var y_pos = (y - (border == null ? 0 : ((!)border).top)) / get_char_height ();
 		return match_check (x_pos, y_pos, out tag);
 	}
 

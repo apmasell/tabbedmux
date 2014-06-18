@@ -40,8 +40,9 @@ public class TabbedMux.OpenDialog : Gtk.Window {
 	[GtkCallback]
 	private void on_connect () {
 		try {
-			TMuxStream stream;
-			string session_name = session.text.strip ();
+			TMuxStream? stream;
+
+			var session_name = session.text.strip ();
 			if (":" in session_name) {
 				show_error (this, "Session names may not contain colons.");
 				return;
@@ -80,7 +81,7 @@ public class TabbedMux.OpenDialog : Gtk.Window {
 			if (stream == null) {
 				show_error (this, "Could not connect.");
 			} else {
-				((Application) application).add_stream (stream);
+				((Application) application).add_stream ((!)stream);
 			}
 		} catch (Error e) {
 			show_error (this, e.message);

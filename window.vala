@@ -133,7 +133,7 @@ public class TabbedMux.Window : Gtk.ApplicationWindow {
 		terminal.selection_changed.connect (unowned_this.on_selection_changed);
 		message ("Adding window from %s.", window.stream.name);
 		show_all ();
-		notebook.set_current_page(id);
+		notebook.set_current_page (id);
 	}
 
 	/**
@@ -145,7 +145,7 @@ public class TabbedMux.Window : Gtk.ApplicationWindow {
 	private void create_session () {
 		var widget = notebook.get_nth_page (notebook.page) as Terminal;
 		if (widget != null) {
-			widget.tmux_window.stream.create_window ();
+			((!)widget).tmux_window.stream.create_window ();
 		} else if (application is Application) {
 			var streams = ((Application) application).streams;
 			if (streams.size == 1) {
@@ -177,7 +177,7 @@ public class TabbedMux.Window : Gtk.ApplicationWindow {
 	private void on_copy () {
 		var widget = notebook.get_nth_page (notebook.page) as Terminal;
 		if (widget != null) {
-			widget.copy_primary ();
+			((!)widget).copy_primary ();
 		}
 	}
 
@@ -185,7 +185,7 @@ public class TabbedMux.Window : Gtk.ApplicationWindow {
 	private void on_paste () {
 		var widget = notebook.get_nth_page (notebook.page) as Terminal;
 		if (widget != null) {
-			widget.paste_primary ();
+			((!)widget).paste_primary ();
 		}
 	}
 
@@ -197,9 +197,9 @@ public class TabbedMux.Window : Gtk.ApplicationWindow {
 	private void on_tmux_window_closed (TMuxWindow tmux_window) {
 		for (var it = 0; it < notebook.get_n_pages (); it++) {
 			var terminal = notebook.get_nth_page (it) as Terminal;
-			if (terminal != null && terminal.tmux_window == tmux_window) {
+			if (terminal != null && ((!)terminal).tmux_window == tmux_window) {
 				notebook.remove_page (it);
-				unsized_children.remove (terminal);
+				unsized_children.remove ((!)terminal);
 				return;
 			}
 		}
@@ -218,11 +218,11 @@ public class TabbedMux.Window : Gtk.ApplicationWindow {
 		if (terminal != null) {
 			message ("Switched terminal.");
 			/* If we've switched to a terminal that doesn't know about the size of the window, force it to resize. */
-			if (terminal in unsized_children) {
-				terminal.resize_tmux ();
-				unsized_children.remove (terminal);
+			if ((!)terminal in unsized_children) {
+				((!)terminal).resize_tmux ();
+				unsized_children.remove ((!)terminal);
 			}
-			copy_item.sensitive = terminal.get_has_selection ();
+			copy_item.sensitive = ((!)terminal).get_has_selection ();
 		} else {
 			message ("Non-terminal found in window.");
 		}
@@ -235,7 +235,7 @@ public class TabbedMux.Window : Gtk.ApplicationWindow {
 	private void refresh_tab () {
 		var widget = notebook.get_nth_page (notebook.page) as Terminal;
 		if (widget != null) {
-			widget.tmux_window.refresh ();
+			((!)widget).tmux_window.refresh ();
 		}
 	}
 
@@ -249,10 +249,10 @@ public class TabbedMux.Window : Gtk.ApplicationWindow {
 				var terminal = notebook.get_nth_page (it) as Terminal;
 				if (terminal != null) {
 					if (it == notebook.page) {
-						terminal.resize_tmux ();
-						unsized_children.remove (terminal);
+						((!)terminal).resize_tmux ();
+						unsized_children.remove ((!)terminal);
 					} else {
-						unsized_children.add (terminal);
+						unsized_children.add ((!)terminal);
 					}
 				}
 			}

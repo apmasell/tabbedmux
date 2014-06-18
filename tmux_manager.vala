@@ -33,7 +33,7 @@ namespace TabbedMux {
 		public string name {
 			get; private set;
 		}
-		public string? session_name {
+		public string session_name {
 			get; internal set;
 		}
 
@@ -104,13 +104,13 @@ namespace TabbedMux {
 						message ("%s:%s: End of stream.", name, session_name);
 						return "No more data to read";
 					}
-					var parts = str.split (" ");
+					var parts = ((!)str).split (" ");
 					message ("%s:%s: Processing: %s", name, session_name, parts[0]);
 					switch (parts[0]) {
 					 /*
 					  * TMux sent some kind of data. Find the matching cookie and process the data.
 					  */
-					 case "%begin" :
+					 case "%begin":
 						 var output_num = int.parse (parts[2]);
 						 NextOutput action = NextOutput.NONE;
 						 int window_id = 0;
@@ -121,7 +121,7 @@ namespace TabbedMux {
 							 window_id = todo.id;
 						 }
 						 string? output_line;
-						 while ((output_line = yield read_line_async (cancellable)) !=  null && !(output_line.has_prefix ("%end") || output_line.has_prefix ("%error"))) {
+						 while ((output_line = yield read_line_async (cancellable)) !=  null && !(((!)output_line).has_prefix ("%end") || ((!)output_line).has_prefix ("%error"))) {
 
 							 switch (action) {
 							  /*
@@ -130,8 +130,8 @@ namespace TabbedMux {
 							  case NextOutput.CAPTURE :
 								  if (windows.has_key (window_id)) {
 									  var window = windows[window_id];
-									  if (output_line.length > 0) {
-										  window.rx_data (output_line.data);
+									  if (((!)output_line).length > 0) {
+										  window.rx_data (((!)output_line).data);
 									  }
 								  } else {
 									  warning ("%s: Received capture for non-existent window %d.", name, window_id);
@@ -144,7 +144,7 @@ namespace TabbedMux {
 							   * TMux uses numeric session IDs, but we can login with a text one. This lets us get our own ID, so we can correctly identify messages for ourself.
 							   */
 							  case NextOutput.SESSION_ID:
-								  var id = int.parse (output_line);
+								  var id = int.parse ((!)output_line);
 								  this.id = id;
 								  break;
 
@@ -152,8 +152,8 @@ namespace TabbedMux {
 							   * A list of windows.
 							   */
 							  case NextOutput.WINDOWS:
-								  message ("%s:%s: Received pane information. %s", name, session_name, output_line);
-								  var info_parts = output_line.split (":");
+								  message ("%s:%s: Received pane information. %s", name, session_name, (!)output_line);
+								  var info_parts = ((!)output_line).split (":");
 								  if (info_parts.length > 3) {
 									  var id = parse_window (info_parts[0]);
 									  var width = int.parse (info_parts[1]);
@@ -176,7 +176,7 @@ namespace TabbedMux {
 									  }
 									  window.set_size (width, height);
 								  } else {
-									  critical ("Cannot parse list-windows output: %s.", output_line);
+									  critical ("Cannot parse list-windows output: %s.", (!)output_line);
 								  }
 								  break;
 
@@ -184,16 +184,17 @@ namespace TabbedMux {
 								  break;
 
 							  default:
-								  if (output_line.length > 0) {
-									  message ("%s:%s: Unsolicited output: %s", name, session_name, output_line);
+								  if (((!)output_line).length > 0) {
+									  message ("%s:%s: Unsolicited output: %s", name, session_name, (!)output_line);
 								  }
 								  break;
 							 }
 						 }
-						 message ("%s:%s: Finished output block: %s", name, session_name, output_line);
 						 if (output_line == null) {
 							 message ("%s:%s: End of input reading data block from TMux.", name, session_name);
 							 return "Connection unceremoniously terminated.";
+						 } else {
+							 message ("%s:%s: Finished output block: %s", name, session_name, (!)output_line);
 						 }
 						 break;
 
@@ -289,7 +290,7 @@ namespace TabbedMux {
 						 break;
 
 					 default:
-						 critical ("%s:%s: Unrecognised command from TMux: %s", name, session_name, str);
+						 critical ("%s:%s: Unrecognised command from TMux: %s", name, session_name, (!)str);
 						 break;
 					}
 				} catch (Error e) {

@@ -54,7 +54,10 @@ public class TabbedMux.SavedSessions : GLib.MenuModel {
 				if (stream == null) {
 					show_error (window, "Could not connect.");
 				} else {
-					((Application) window.application).add_stream (stream);
+					var application =  window.application as Application;
+					if (application != null) {
+						((!)application).add_stream ((!)stream);
+					}
 				}
 			} catch (Error e) {
 				show_error (window, e.message);
