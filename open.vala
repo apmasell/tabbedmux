@@ -13,6 +13,8 @@ public class TabbedMux.OpenDialog : Gtk.Window {
 	private Gtk.Entry port;
 	[GtkChild]
 	private Gtk.Entry session;
+	[GtkChild]
+	private Gtk.Entry binary;
 
 	internal OpenDialog (Window parent) {
 		Object (application: parent.application);
@@ -50,6 +52,12 @@ public class TabbedMux.OpenDialog : Gtk.Window {
 			if (session_name.length == 0) {
 				session_name = "0";
 			}
+
+			var tmux_binary = binary.text.strip ();
+			if (tmux_binary.length == 0) {
+				tmux_binary = "tmux";
+			}
+
 			if (remote_connection.active) {
 				var hostname = host.text.strip ();
 				if (hostname.length == 0) {
@@ -74,9 +82,9 @@ public class TabbedMux.OpenDialog : Gtk.Window {
 					username = Environment.get_user_name ();
 				}
 				var keybd_dialog = new KeyboardInteractiveDialog (this, host.text);
-				stream = TMuxSshStream.open (session_name, host.text, (short) port_number, username, keybd_dialog.respond);
+				stream = TMuxSshStream.open (session_name, host.text, (short) port_number, username, tmux_binary, keybd_dialog.respond);
 			} else {
-				stream = TMuxLocalStream.open (session_name);
+				stream = TMuxLocalStream.open (session_name, tmux_binary);
 			}
 			if (stream == null) {
 				show_error (this, "Could not connect.");

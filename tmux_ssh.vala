@@ -18,8 +18,8 @@ internal class TabbedMux.TMuxSshStream : TMuxStream {
 		get; private set;
 	}
 
-	internal TMuxSshStream (string session_name, string host, uint16 port, string username, Socket socket, owned SSH2.Session session, owned SSH2.Channel channel) {
-		base (port == 22 ? @"$(username)@$(host)" : @"$(username)@$(host):$(port)", session_name);
+	internal TMuxSshStream (string session_name, string host, uint16 port, string username, string binary, Socket socket, owned SSH2.Session session, owned SSH2.Channel channel) {
+		base (port == 22 ? @"$(username)@$(host) $(binary)" : @"$(username)@$(host):$(port) $(binary)", session_name, binary);
 		this.session = (owned) session;
 		this.channel = (owned) channel;
 		this.socket = socket;
@@ -122,7 +122,7 @@ internal class TabbedMux.TMuxSshStream : TMuxStream {
 	private static extern SSH2.Error password_adapter (SSH2.Session session, string username, InteractiveAuthentication handler);
 	private static extern SSH2.Error password_simple (SSH2.Session session, string username, InteractiveAuthentication handler);
 
-	public static TMuxStream? open (string session_name, string host, uint16 port, string username, InteractiveAuthentication? get_password) throws Error {
+	public static TMuxStream? open (string session_name, string host, uint16 port, string username, string binary, InteractiveAuthentication? get_password) throws Error {
 		var session = SSH2.Session.create<bool> ();
 
 		/*
@@ -190,7 +190,7 @@ internal class TabbedMux.TMuxSshStream : TMuxStream {
 			session.get_last_error (out error_message);
 			throw new IOError.INVALID_DATA ((string) error_message);
 		}
-		var command = @"TERM=$(TERM_TYPE) tmux -C new -A -s $(Shell.quote(session_name))";
+		var command = @"TERM=$(TERM_TYPE) $(Shell.quote (binary)) -C new -A -s $(Shell.quote (session_name))";
 		message ("%s@%s:%d:%s: executing %s", username, host, port, session_name, command);
 		if (((!)channel).start_command (command) != SSH2.Error.NONE) {
 			char[] error_message;
@@ -201,6 +201,6 @@ internal class TabbedMux.TMuxSshStream : TMuxStream {
 		 * Create an Stream and return it.
 		 */
 		session.blocking = false;
-		return new TMuxSshStream (session_name, host, port, username, socket, (!)(owned) session, (!)(owned) channel);
+		return new TMuxSshStream (session_name, host, port, username, binary, socket, (!)(owned) session, (!)(owned) channel);
 	}
 }

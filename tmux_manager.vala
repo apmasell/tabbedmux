@@ -36,10 +36,14 @@ namespace TabbedMux {
 		public string session_name {
 			get; internal set;
 		}
+		public string binary {
+			get; internal set;
+		}
 
-		protected TMuxStream (string name, string session_name) {
+		protected TMuxStream (string name, string session_name, string binary) {
 			this.name = name;
 			this.session_name = session_name;
+			this.binary = binary;
 		}
 
 		/**
