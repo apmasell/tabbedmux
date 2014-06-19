@@ -382,6 +382,17 @@ namespace TabbedMux {
 		public signal void size_changed (int old_width, int old_height);
 
 		/**
+		 * Kill the current window on the remote end.
+		 */
+		public void destroy () {
+			try {
+				stream.exec (@"kill-window -t @$(id)");
+			} catch (IOError e) {
+				critical ("%s:%s:%d: Kill window failed: %s", stream.name, stream.session_name, id, e.message);
+			}
+		}
+
+		/**
 		 * Re-request the contents of the window instead of getting incremenal changes.
 		 */
 		public void refresh () {

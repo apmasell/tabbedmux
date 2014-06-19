@@ -164,6 +164,22 @@ public class TabbedMux.Window : Gtk.ApplicationWindow {
 	}
 
 	/**
+	 * Remove the current window.
+	 */
+	[GtkCallback]
+	private void destroy_session () {
+		var widget = notebook.get_nth_page (notebook.page) as Terminal;
+		if (widget != null) {
+			var window = ((!)widget).tmux_window;
+			var dialog = new Gtk.MessageDialog (this, Gtk.DialogFlags.MODAL,  Gtk.MessageType.WARNING, Gtk.ButtonsType.YES_NO, "Kill TMux window “%s” and terminate running process?", window.title);
+			if (dialog.run () == Gtk.ResponseType.YES) {
+				window.destroy ();
+			}
+			dialog.destroy ();
+		}
+	}
+
+	/**
 	 * Kill the remote TMux server for the current window.
 	 */
 	[GtkCallback]
