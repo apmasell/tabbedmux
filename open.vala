@@ -19,8 +19,7 @@ public class TabbedMux.OpenDialog : Gtk.Dialog {
 	private Gtk.CheckButton save;
 
 	internal OpenDialog (Window parent) {
-		Object (application: parent.application);
-		transient_for = parent;
+		Object (application: parent.application, transient_for: parent);
 	}
 
 	[GtkCallback]
