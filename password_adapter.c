@@ -61,7 +61,7 @@ int tabbed_mux_tmux_ssh_stream_password_adapter(
 
 /*
  * Since we've already got a thing for keyboard interactive, make simple passwords just call the keyboard interactive handler.
- * */
+ */
 int tabbed_mux_tmux_ssh_stream_password_simple(
 	LIBSSH2_SESSION * session,
 	const gchar * username,
