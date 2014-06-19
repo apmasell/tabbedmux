@@ -84,6 +84,17 @@ namespace TabbedMux {
 		}
 
 		/**
+		 * As the remote TMux server to die in a fire.
+		 */
+		public void destroy () {
+			try {
+				exec ("kill-server");
+			} catch (IOError e) {
+				critical ("%s:%s: Failed to kill server: %s", name, session_name, e.message);
+			}
+		}
+
+		/**
 		 * Blast some data at TMux and register a cookie to handle the output.
 		 */
 		internal void exec (string command, NextOutput output_type = NextOutput.NONE, int window_id = 0) throws IOError {

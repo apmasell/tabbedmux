@@ -92,10 +92,11 @@
                       </object>
                     </child>
                     <child>
-                      <object class="GtkSeparatorMenuItem" id="separatormenuitem1">
-                        <property name="use_action_appearance">False</property>
+                      <object class="GtkMenuItem" id="kill_server_item">
                         <property name="visible">True</property>
                         <property name="can_focus">False</property>
+                        <property name="label" translatable="yes">Shutdown</property>
+                        <signal name="activate" handler="destroy_server" object="TabbedMuxWindow" swapped="no"/>
                       </object>
                     </child>
                     <child>
