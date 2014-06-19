@@ -70,6 +70,24 @@ public class TabbedMux.Window : Gtk.ApplicationWindow {
 			var saved_sessions = ((Application) app).saved_sessions;
 			saved_sessions.changed.connect (this.on_saved_changed);
 			on_saved_changed (saved_sessions);
+
+			unowned Window unowned_this = this;
+
+			var add = new Gtk.Button ();
+			add.tooltip_text = "New terminal";
+			add.relief = Gtk.ReliefStyle.NONE;
+			add.add (new Gtk.Image.from_gicon (new ThemedIcon.with_default_fallbacks ("tab-new-symbolic"), Gtk.IconSize.MENU));
+			add.show_all ();
+			notebook.set_action_widget (add, Gtk.PackType.START);
+			add.clicked.connect (unowned_this.create_session);
+
+			var close = new Gtk.Button ();
+			close.tooltip_text = "Close terminal";
+			close.relief = Gtk.ReliefStyle.NONE;
+			close.add (new Gtk.Image.from_gicon (new ThemedIcon.with_default_fallbacks ("window-close-symbolic"), Gtk.IconSize.MENU));
+			close.show_all ();
+			notebook.set_action_widget (close, Gtk.PackType.END);
+			close.clicked.connect (unowned_this.destroy_session);
 		}
 	}
 
