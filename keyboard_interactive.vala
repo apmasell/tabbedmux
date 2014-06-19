@@ -3,7 +3,7 @@
  */
 public class KeyboardInteractiveDialog : Gtk.Dialog {
 	public KeyboardInteractiveDialog (Gtk.Window parent, string host) {
-		title = @"Connect $(host)...";
+		Object(title: @"Connect $(host)...", transient_for: parent);
 		add_button ("Ok", 0);
 		var ok_button = get_widget_for_response (0);
 		ok_button.can_default = true;
