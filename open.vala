@@ -15,6 +15,8 @@ public class TabbedMux.OpenDialog : Gtk.Dialog {
 	private Gtk.Entry session;
 	[GtkChild]
 	private Gtk.Entry binary;
+	[GtkChild]
+	private Gtk.CheckButton save;
 
 	internal OpenDialog (Window parent) {
 		Object (application: parent.application);
@@ -81,9 +83,18 @@ public class TabbedMux.OpenDialog : Gtk.Dialog {
 				if (username.length == 0) {
 					username = Environment.get_user_name ();
 				}
+
+				if (save.active && application is Application) {
+					((Application) application).saved_sessions.append_ssh (session_name, host.text, (uint16) port_number, username, tmux_binary);
+				}
+
 				var keybd_dialog = new KeyboardInteractiveDialog (this, host.text);
-				stream = TMuxSshStream.open (session_name, host.text, (short) port_number, username, tmux_binary, keybd_dialog.respond);
+				stream = TMuxSshStream.open (session_name, host.text, (uint16) port_number, username, tmux_binary, keybd_dialog.respond);
 			} else {
+				if (save.active && application is Application) {
+					((Application) application).saved_sessions.append_local (session_name, tmux_binary);
+				}
+
 				stream = TMuxLocalStream.open (session_name, tmux_binary);
 			}
 			if (stream == null) {

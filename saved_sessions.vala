@@ -17,6 +17,26 @@ public class TabbedMux.SavedSessions : GLib.MenuModel {
 
 	public delegate bool CheckDisabled (SessionItem item);
 
+	private Variant append (Variant original, Variant extra) {
+		var count = original.n_children ();
+		var items = new Variant[count + 1];
+		for (var it = 0; it < count; it++) {
+			items[it] = original.get_child_value (it);
+		}
+		items[count] = extra;
+		return new Variant.array (extra.get_type (), items);
+	}
+
+	public void append_local (string session, string binary) {
+		local_sessions = append (local_sessions, new Variant ("(ss)", session, binary));
+		settings.set_value ("saved-local", local_sessions);
+	}
+
+	public void append_ssh (string session, string host, uint16 port, string username, string binary) {
+		ssh_sessions = append (ssh_sessions, new Variant ("(ssqss)", session, host, port, username, binary));
+		settings.set_value ("saved-ssh", ssh_sessions);
+	}
+
 	public void update (Gtk.Menu menu, CheckDisabled check) {
 		foreach (var child in menu.get_children ()) {
 			menu.remove (child);
