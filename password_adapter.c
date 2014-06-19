@@ -80,7 +80,7 @@ int tabbed_mux_tmux_ssh_stream_password_simple(
 
 	handler(username, "Enter password.", &prompt, 1, &response, 1, handler_target);
 
-	result = libssh2_userauth_password(session, username, response.text);
+	result = libssh2_userauth_password(session, username, response.text == NULL ? "" : response.text);
 	g_free(response.text);
 	return result;
 }
