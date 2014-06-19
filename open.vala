@@ -2,7 +2,7 @@
  * Create an open new session dialog
  */
 [GtkTemplate (ui = "/name/masella/tabbedmux/open.ui")]
-public class TabbedMux.OpenDialog : Gtk.Window {
+public class TabbedMux.OpenDialog : Gtk.Dialog {
 	[GtkChild]
 	private Gtk.RadioButton remote_connection;
 	[GtkChild]
