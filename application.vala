@@ -42,7 +42,7 @@ public class TabbedMux.Application : Gtk.Application {
 			var notification = new Notify.Notification (@"Disconnected from $(stream.name) session '$(stream.session_name)'.", reason, null);
 			notification.show ();
 		} catch (Error e) {
-			critical (e.message);
+			critical ("Notification error: %s", e.message);
 		}
 	}
 
@@ -68,7 +68,7 @@ public class TabbedMux.Application : Gtk.Application {
 				add_stream ((!)stream);
 			}
 		} catch (Error e) {
-			critical (e.message);
+			critical ("Startup error: %s", e.message);
 		}
 	}
 }

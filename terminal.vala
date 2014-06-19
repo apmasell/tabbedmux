@@ -19,7 +19,7 @@ public class TabbedMux.Terminal : Vte.Terminal {
 			int id = match_add_gregex (regex, 0);
 			match_set_cursor_type (id, Gdk.CursorType.HAND2);
 		} catch (RegexError e) {
-			critical (e.message);
+			critical ("Regex error: %s", e.message);
 		}
 		unowned Terminal unowned_this = this;
 		tmux_window.renamed.connect (unowned_this.update_tab_label);

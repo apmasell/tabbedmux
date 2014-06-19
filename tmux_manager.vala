@@ -79,7 +79,7 @@ namespace TabbedMux {
 			try {
 				exec ("new-window");
 			} catch (IOError e) {
-				critical ("Failed to create window: %s", e.message);
+				critical ("%s:%s: Failed to create window: %s", name, session_name, e.message);
 			}
 		}
 
@@ -138,7 +138,7 @@ namespace TabbedMux {
 										  window.rx_data (((!)output_line).data);
 									  }
 								  } else {
-									  warning ("%s: Received capture for non-existent window %d.", name, window_id);
+									  warning ("%s:%s: Received capture for non-existent window %d.", name, session_name, window_id);
 								  }
 								  break;
 
@@ -180,7 +180,7 @@ namespace TabbedMux {
 									  }
 									  window.set_size (width, height);
 								  } else {
-									  critical ("Cannot parse list-windows output: %s.", (!)output_line);
+									  critical ("%s:%s: Cannot parse list-windows output: %s.", name, session_name, (!)output_line);
 								  }
 								  break;
 
@@ -298,7 +298,7 @@ namespace TabbedMux {
 						 break;
 					}
 				} catch (Error e) {
-					critical (e.message);
+					critical ("%s:%s: %s", name, session_name, e.message);
 					return e.message;
 				}
 			}
@@ -377,7 +377,7 @@ namespace TabbedMux {
 			try {
 				stream.exec (@"capture-pane -p -e -q -J -t @$(id)", NextOutput.CAPTURE, id);
 			} catch (IOError e) {
-				critical (e.message);
+				critical ("%s:%s:%d: Capture pane failed: %s", stream.name, stream.session_name, id, e.message);
 			}
 		}
 
@@ -393,7 +393,7 @@ namespace TabbedMux {
 			try {
 				stream.exec (@"refresh-client -C $(width),$(height)");
 			} catch (IOError e) {
-				critical (e.message);
+				critical ("%s:%s:%d: Resize client failed: %s", stream.name, stream.session_name, id, e.message);
 			}
 		}
 
@@ -419,7 +419,7 @@ namespace TabbedMux {
 				}
 				stream.exec (command.str);
 			} catch (IOError e) {
-				critical (e.message);
+				critical ("%s:%s:%d: Send keys failed: %s", stream.name, stream.session_name, id, e.message);
 			}
 		}
 	}
