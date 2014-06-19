@@ -241,9 +241,10 @@
             <child>
               <object class="GtkButton" id="connect_button">
                 <property name="label">Connect</property>
-                <property name="use_action_appearance">False</property>
                 <property name="visible">True</property>
                 <property name="can_focus">True</property>
+                <property name="can_default">True</property>
+                <property name="has_default">True</property>
                 <property name="receives_default">True</property>
                 <signal name="clicked" handler="on_connect" object="TabbedMuxOpenDialog" swapped="no"/>
               </object>
@@ -256,9 +257,9 @@
             <child>
               <object class="GtkButton" id="cancel_button">
                 <property name="label">Cancel</property>
-                <property name="use_action_appearance">False</property>
                 <property name="visible">True</property>
                 <property name="can_focus">True</property>
+                <property name="can_default">True</property>
                 <property name="receives_default">True</property>
                 <signal name="clicked" handler="on_cancel" object="TabbedMuxOpenDialog" swapped="no"/>
               </object>
@@ -272,10 +273,15 @@
           <packing>
             <property name="expand">False</property>
             <property name="fill">True</property>
+            <property name="pack_type">end</property>
             <property name="position">6</property>
           </packing>
         </child>
       </object>
     </child>
+    <action-widgets>
+      <action-widget response="0">connect_button</action-widget>
+      <action-widget response="1">cancel_button</action-widget>
+    </action-widgets>
   </template>
 </interface>
