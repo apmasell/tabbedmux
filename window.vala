@@ -53,6 +53,8 @@ public class TabbedMux.Window : Gtk.ApplicationWindow {
 	private Gtk.Menu disconnect_menu;
 	[GtkChild]
 	private Gtk.Menu saved_menu;
+	[GtkChild]
+	private Gtk.MenuItem saved_sessions_item;
 
 	/**
 	 * These are the tabs that haven't been resized. We try to resize lazily since resizing can mangle the information in the remote session.
@@ -92,8 +94,9 @@ public class TabbedMux.Window : Gtk.ApplicationWindow {
 	}
 
 	private void on_saved_changed (SavedSessions sender) {
+		bool non_empty;
 		if (application is Application) {
-			sender.update (saved_menu, (item) => {
+			non_empty = sender.update (saved_menu, (item) => {
 					       foreach (var stream in ((Application) application).streams) {
 						       if (item.matches (stream)) {
 							       return true;
@@ -102,8 +105,9 @@ public class TabbedMux.Window : Gtk.ApplicationWindow {
 					       return false;
 				       });
 		} else {
-			sender.update (saved_menu, (item) => true);
+			non_empty = sender.update (saved_menu, (item) => true);
 		}
+		saved_sessions_item.sensitive = non_empty;
 	}
 
 	[GtkCallback]

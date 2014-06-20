@@ -37,7 +37,8 @@ public class TabbedMux.SavedSessions : GLib.MenuModel {
 		settings.set_value ("saved-ssh", ssh_sessions);
 	}
 
-	public void update (Gtk.Menu menu, CheckDisabled check) {
+	public bool update (Gtk.Menu menu, CheckDisabled check) {
+		var non_empty = false;
 		foreach (var child in menu.get_children ()) {
 			menu.remove (child);
 		}
@@ -49,6 +50,7 @@ public class TabbedMux.SavedSessions : GLib.MenuModel {
 				var item = new LocalSessionItem (session, binary);
 				item.sensitive = !check (item);
 				menu.add (item);
+				non_empty = true;
 			}
 		}
 		if (ssh_sessions != null) {
@@ -62,8 +64,10 @@ public class TabbedMux.SavedSessions : GLib.MenuModel {
 				var item = new SshSessionItem (session, host, port, username, binary);
 				item.sensitive = !check (item);
 				menu.add (item);
+				non_empty = true;
 			}
 		}
+		return non_empty;
 	}
 	public abstract class SessionItem : Gtk.MenuItem {
 		protected abstract TMuxStream? open () throws Error;
