@@ -1,3 +1,10 @@
+tabbedmux (1.1~ppa0) trusty; urgency=medium
+
+  * Many UI fixes.
+  * Saved sessions handling.
+
+ -- Andre Masella <andre@masella.name>  Fri, 20 Jun 2014 07:12:31 -0400
+
 tabbedmux (1.0~ppa0) trusty; urgency=low
 
   * Initial Release.
