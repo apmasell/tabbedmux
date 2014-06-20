@@ -1,3 +1,9 @@
+tabbedmux (1.1~ppa1) trusty; urgency=medium
+
+  * Fix install script 
+
+ -- Andre Masella <andre@masella.name>  Fri, 20 Jun 2014 07:41:01 -0400
+
 tabbedmux (1.1~ppa0) trusty; urgency=medium
 
   * Many UI fixes.

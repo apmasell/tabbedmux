@@ -31,8 +31,10 @@ clean:
 
 install:
 	install -D tabbedmux $(DESTDIR)$(PREFIX)/bin/tabbedmux
-	install -D tabbedmux.desktop $(DESTDIR)$(PREFIX)/share/applications
-	install -D name.masella.tabbedmux.gschema.xml $(DESTDIR)$(PREFIX)/share/glib-2.0/schemas
+	install -d $(DESTDIR)$(PREFIX)/share/applications
+	install tabbedmux.desktop $(DESTDIR)$(PREFIX)/share/applications
+	install -d $(DESTDIR)$(PREFIX)/share/glib-2.0/schemas
+	install name.masella.tabbedmux.gschema.xml $(DESTDIR)$(PREFIX)/share/glib-2.0/schemas
 	glib-compile-schemas $(DESTDIR)$(PREFIX)/share/glib-2.0/schemas
 
 .PHONY: clean  install
