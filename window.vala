@@ -55,6 +55,10 @@ public class TabbedMux.Window : Gtk.ApplicationWindow {
 	private Gtk.Menu saved_menu;
 	[GtkChild]
 	private Gtk.MenuItem saved_sessions_item;
+	[GtkChild]
+	private Gtk.Menu remove_saved_menu;
+	[GtkChild]
+	private Gtk.MenuItem remove_saved_item;
 
 	/**
 	 * These are the tabs that haven't been resized. We try to resize lazily since resizing can mangle the information in the remote session.
@@ -109,18 +113,28 @@ public class TabbedMux.Window : Gtk.ApplicationWindow {
 		foreach (var child in saved_menu.get_children ()) {
 			saved_menu.remove (child);
 		}
+		foreach (var child in remove_saved_menu.get_children ()) {
+			remove_saved_menu.remove (child);
+		}
 		sender.update ((session, binary) => {
-				       var item = new LocalSessionItem (session, binary);
-				       item.sensitive = !is_stream_active (item);
-				       saved_menu.add (item);
+				       var open_item = new LocalSessionItem (session, binary);
+				       var remove_item = new RemoveLocalSessionItem (sender, session, binary);
+				       remove_item.sensitive = open_item.sensitive = !is_stream_active (open_item);
+				       saved_menu.add (open_item);
+				       remove_saved_menu.add (remove_item);
 				       non_empty = true;
 			       }, (session, host, port, username, binary) => {
-				       var item = new SshSessionItem (session, host, port, username, binary);
-				       item.sensitive = !is_stream_active (item);
-				       saved_menu.add (item);
+				       var open_item = new SshSessionItem (session, host, port, username, binary);
+				       var remove_item = new RemoveSshSessionItem (sender, session, host, port, username, binary);
+				       remove_item.sensitive = open_item.sensitive = !is_stream_active (open_item);
+				       saved_menu.add (open_item);
+				       remove_saved_menu.add (remove_item);
 				       non_empty = true;
 			       });
+		saved_menu.show_all ();
+		remove_saved_menu.show_all ();
 		saved_sessions_item.sensitive = non_empty;
+		remove_saved_item.sensitive = non_empty;
 	}
 
 	[GtkCallback]
@@ -389,6 +403,53 @@ public class TabbedMux.Window : Gtk.ApplicationWindow {
 		protected override TMuxStream? open () throws Error {
 			var keybd_dialog = new KeyboardInteractiveDialog ((Gtk.Window)get_toplevel (), host);
 			return TMuxSshStream.open (session, host, port, username, binary, keybd_dialog.respond);
+		}
+	}
+	public abstract class RemoveSessionItem : Gtk.MenuItem {
+		protected abstract void remove_session ();
+		public override void activate () {
+			var window = (Gtk.Window)get_toplevel ();
+			while (window.attached_to != null) {
+				window = (Gtk.Window)window.attached_to.get_toplevel ();
+			}
+			var dialog = new Gtk.MessageDialog (window, Gtk.DialogFlags.MODAL,  Gtk.MessageType.WARNING, Gtk.ButtonsType.YES_NO, "Remove session “%s”?", label);
+			if (dialog.run () == Gtk.ResponseType.YES) {
+				remove_session ();
+			}
+			dialog.destroy ();
+		}
+	}
+	private class RemoveLocalSessionItem : RemoveSessionItem {
+		private SavedSessions saved;
+		private string session;
+		private string binary;
+		internal RemoveLocalSessionItem (SavedSessions saved, string session, string binary) {
+			this.saved = saved;
+			this.session = session;
+			this.binary = binary;
+			label = "%s (Local: %s)".printf (session, binary);
+		}
+		protected override void remove_session () {
+			saved.remove_local (session, binary);
+		}
+	}       private class RemoveSshSessionItem : RemoveSessionItem {
+		private SavedSessions saved;
+		private string session;
+		private string host;
+		private uint16 port;
+		private string username;
+		private string binary;
+		internal RemoveSshSessionItem (SavedSessions saved, string session, string host, uint16 port, string username, string binary) {
+			this.saved = saved;
+			this.session = session;
+			this.host = host;
+			this.port = port;
+			this.username = username;
+			this.binary = binary;
+			label = port == 22 ? "%s@%s - %s - %s".printf (username, host, binary, session) : "%s@%s:%hu - %s - %s".printf (username, host, port, binary, session);
+		}
+		protected override void remove_session () {
+			saved.remove_ssh (session, host, port, username, binary);
 		}
 	}
 }

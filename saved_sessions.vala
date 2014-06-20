@@ -53,6 +53,29 @@ public class TabbedMux.SavedSessions : GLib.MenuModel {
 		settings.set_value ("saved-ssh", ssh_sessions);
 	}
 
+	public void remove_local (string session, string binary) {
+		local_sessions = filter (local_sessions, (item) => {
+						 string item_session;
+						 string item_binary;
+						 item.get ("(ss)", out item_session, out item_binary);
+						 return !(item_session == session && item_binary == binary);
+					 });
+		settings.set_value ("saved-local", local_sessions);
+	}
+
+	public void remove_ssh (string session, string host, uint16 port, string username, string binary) {
+		ssh_sessions = filter (ssh_sessions, (item) => {
+					       string item_session;
+					       string item_host;
+					       uint16 item_port;
+					       string item_username;
+					       string item_binary;
+					       item.get ("(ssqss)", out item_session, out item_host, out item_port, out item_username, out item_binary);
+					       return !(item_session == session && item_host == host && item_port == port && item_username == username && item_binary == binary);
+				       });
+		settings.set_value ("saved-ssh", ssh_sessions);
+	}
+
 	public void update (UpdateLocal update_local, UpdateSsh update_ssh) {
 		if (local_sessions != null) {
 			foreach (var local_session in local_sessions) {
