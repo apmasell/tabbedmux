@@ -93,20 +93,33 @@ public class TabbedMux.Window : Gtk.ApplicationWindow {
 		}
 	}
 
-	private void on_saved_changed (SavedSessions sender) {
-		bool non_empty;
-		if (application is Application) {
-			non_empty = sender.update (saved_menu, (item) => {
-					       foreach (var stream in ((Application) application).streams) {
-						       if (item.matches (stream)) {
-							       return true;
-						       }
-					       }
-					       return false;
-				       });
-		} else {
-			non_empty = sender.update (saved_menu, (item) => true);
+	private bool is_stream_active (SessionItem item) {
+		if (!(application is Application)) {
+			return false;
 		}
+		foreach (var stream in ((Application) application).streams) {
+			if (item.matches (stream)) {
+				return true;
+			}
+		}
+		return false;
+	}
+	private void on_saved_changed (SavedSessions sender) {
+		var non_empty = false;
+		foreach (var child in saved_menu.get_children ()) {
+			saved_menu.remove (child);
+		}
+		sender.update ((session, binary) => {
+				       var item = new LocalSessionItem (session, binary);
+				       item.sensitive = !is_stream_active (item);
+				       saved_menu.add (item);
+				       non_empty = true;
+			       }, (session, host, port, username, binary) => {
+				       var item = new SshSessionItem (session, host, port, username, binary);
+				       item.sensitive = !is_stream_active (item);
+				       saved_menu.add (item);
+				       non_empty = true;
+			       });
 		saved_sessions_item.sensitive = non_empty;
 	}
 
@@ -313,5 +326,69 @@ public class TabbedMux.Window : Gtk.ApplicationWindow {
 			}
 		}
 		return result;
+	}
+	public abstract class SessionItem : Gtk.MenuItem {
+		protected abstract TMuxStream? open () throws Error;
+		public abstract bool matches (TMuxStream stream);
+		public override void activate () {
+			var window = (Gtk.Window)get_toplevel ();
+			while (window.attached_to != null) {
+				window = (Gtk.Window)window.attached_to.get_toplevel ();
+			}
+			try {
+				var stream = open ();
+				if (stream == null) {
+					show_error (window, "Could not connect.");
+				} else {
+					var application =  window.application as Application;
+					if (application != null) {
+						((!)application).add_stream ((!)stream);
+					}
+				}
+			} catch (Error e) {
+				show_error (window, e.message);
+			}
+		}
+	}
+	private class LocalSessionItem : SessionItem {
+		private string session;
+		private string binary;
+		internal LocalSessionItem (string session, string binary) {
+			this.session = session;
+			this.binary = binary;
+			label = "%s (Local: %s)".printf (session, binary);
+		}
+		public override bool matches (TMuxStream stream) {
+			return stream is TMuxLocalStream && stream.session_name == session && stream.binary == binary;
+		}
+		protected override TMuxStream? open () throws Error {
+			return TMuxLocalStream.open (session, binary);
+		}
+	}
+	private class SshSessionItem : SessionItem {
+		private string session;
+		private string host;
+		private uint16 port;
+		private string username;
+		private string binary;
+		internal SshSessionItem (string session, string host, uint16 port, string username, string binary) {
+			this.session = session;
+			this.host = host;
+			this.port = port;
+			this.username = username;
+			this.binary = binary;
+			label = port == 22 ? "%s@%s - %s - %s".printf (username, host, binary, session) : "%s@%s:%hu - %s - %s".printf (username, host, port, binary, session);
+		}
+		public override bool matches (TMuxStream stream) {
+			if (stream is TMuxSshStream && stream.session_name == session) {
+				var ssh_stream = (TMuxSshStream) stream;
+				return ssh_stream.host == host && ssh_stream.port == port && ssh_stream.username == username && ssh_stream.binary == binary;
+			}
+			return false;
+		}
+		protected override TMuxStream? open () throws Error {
+			var keybd_dialog = new KeyboardInteractiveDialog ((Gtk.Window)get_toplevel (), host);
+			return TMuxSshStream.open (session, host, port, username, binary, keybd_dialog.respond);
+		}
 	}
 }
