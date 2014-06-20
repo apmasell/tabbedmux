@@ -28,6 +28,21 @@ public class TabbedMux.SavedSessions : GLib.MenuModel {
 		return new Variant.array (extra.get_type (), items);
 	}
 
+	private delegate bool Filter (Variant item);
+	private Variant filter (Variant list, Filter filter) {
+		var count = list.n_children ();
+		if (count == 0) {
+			return list;
+		}
+		var items = new Variant[0];
+		foreach (var item in list) {
+			if (filter (item)) {
+				items += item;
+			}
+		}
+		return new Variant.array (list.get_child_value (0).get_type (), items);
+	}
+
 	public void append_local (string session, string binary) {
 		local_sessions = append (local_sessions, new Variant ("(ss)", session, binary));
 		settings.set_value ("saved-local", local_sessions);
