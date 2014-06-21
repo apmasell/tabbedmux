@@ -151,6 +151,9 @@ public class TabbedMux.Window : Gtk.ApplicationWindow {
 		disconnect_menu.append (disconnect_item);
 		unowned Window unowned_this = this;
 		stream.connection_closed.connect (unowned_this.on_connection_closed);
+		if (application is Application) {
+			on_saved_changed (((Application) application).saved_sessions);
+		}
 	}
 
 	private static void menu_remove (Gtk.Widget widget, Gtk.Menu parent, TMuxStream stream) {
@@ -162,6 +165,9 @@ public class TabbedMux.Window : Gtk.ApplicationWindow {
 	internal void on_connection_closed (TMuxStream stream, string reason) {
 		new_menu.@foreach ((widget) => menu_remove (widget, new_menu, stream));
 		disconnect_menu.@foreach ((widget) => menu_remove (widget, disconnect_menu, stream));
+		if (application is Application) {
+			on_saved_changed (((Application) application).saved_sessions);
+		}
 	}
 
 	/**
