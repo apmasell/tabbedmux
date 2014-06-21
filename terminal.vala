@@ -14,6 +14,7 @@ public class TabbedMux.Terminal : Vte.Terminal {
 		this.tmux_window = tmux_window;
 		this.emulation = TERM_TYPE;
 		this.pointer_autohide = true;
+		this.encoding = "UTF-8";
 		try {
 			var regex = new GLib.Regex ("(aim|apt|apt+http|bluetooth|callto|file|finger|fish|ftps?|https?|imaps?|info|ldaps?|magnet|man|mms[tu]?|nfs|nntps?|obexftp|pop3s?|rdp|rtsp[tu]?|sftp|sieve|skype|smb|smtps?|tel|vnc|webcal|webdavs?|xmpp):([A-Za-z0-9_~:/?#@!$&'()*+,;=[\\].-]|%[0-9A-Fa-f][0-9A-Fa-f])+");
 			int id = match_add_gregex (regex, 0);
