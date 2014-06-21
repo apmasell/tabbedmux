@@ -193,6 +193,24 @@
                         <signal name="activate" handler="refresh_tab" object="TabbedMuxWindow" swapped="no"/>
                       </object>
                     </child>
+                    <child>
+                      <object class="GtkMenuItem" id="rename_window">
+                        <property name="visible">True</property>
+                        <property name="can_focus">False</property>
+                        <property name="label" translatable="yes">Rename Window...</property>
+                        <property name="use_underline">True</property>
+                        <signal name="activate" handler="rename_window" swapped="no"/>
+                      </object>
+                    </child>
+                    <child>
+                      <object class="GtkMenuItem" id="rename_session">
+                        <property name="visible">True</property>
+                        <property name="can_focus">False</property>
+                        <property name="label" translatable="yes">Rename Session...</property>
+                        <property name="use_underline">True</property>
+                        <signal name="activate" handler="rename_session" swapped="no"/>
+                      </object>
+                    </child>
                   </object>
                 </child>
               </object>

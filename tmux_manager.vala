@@ -106,6 +106,17 @@ namespace TabbedMux {
 		}
 
 		/**
+		 * Rename the session on the other side.
+		 */
+		public void rename (string name) {
+			try {
+				exec (@"rename-session $(Shell.quote(name))");
+			} catch (IOError e) {
+				critical ("%s:%s: Failed to rename session: %s", name, session_name, e.message);
+			}
+		}
+
+		/**
 		 * Blast some data at TMux and register a cookie to handle the output.
 		 */
 		internal void exec (string command, NextOutput output_type = NextOutput.NONE, int window_id = 0) throws IOError {
@@ -411,6 +422,17 @@ namespace TabbedMux {
 				stream.exec (@"capture-pane -p -e -q -J -t @$(id)", NextOutput.CAPTURE, id);
 			} catch (IOError e) {
 				critical ("%s:%s:%d: Capture pane failed: %s", stream.name, stream.session_name, id, e.message);
+			}
+		}
+
+		/**
+		 * Rename the window.
+		 */
+		public void rename (string name) {
+			try {
+				stream.exec (@"rename-window -t @$(id) $(Shell.quote(name))");
+			} catch (IOError e) {
+				critical ("%s:%s:%d: Failed to rename window: %s", stream.name, stream.session_name, id, e.message);
 			}
 		}
 

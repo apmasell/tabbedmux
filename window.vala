@@ -266,6 +266,64 @@ public class TabbedMux.Window : Gtk.ApplicationWindow {
 		}
 	}
 
+	/**
+	 * Rename the remote TMux session for the current window.
+	 */
+	[GtkCallback]
+	private void rename_session () {
+		var widget = notebook.get_nth_page (notebook.page) as Terminal;
+		if (widget != null) {
+			var stream = ((!)widget).tmux_window.stream;
+			var dialog = new Gtk.MessageDialog (this, Gtk.DialogFlags.MODAL,  Gtk.MessageType.QUESTION, Gtk.ButtonsType.OK_CANCEL, "Rename session on “%s”:", stream.name);
+			var entry = new Gtk.Entry ();
+			entry.text = stream.session_name;
+			entry.activates_default = true;
+			dialog.get_content_area ().pack_end (entry);
+			entry.show ();
+			dialog.set_default_response (Gtk.ResponseType.OK);
+			if (dialog.run () == Gtk.ResponseType.OK) {
+				var name = entry.text.strip ();
+				if (name.length == 0 || ":" in name) {
+					var error_dialog = new Gtk.MessageDialog (this, Gtk.DialogFlags.MODAL,  Gtk.MessageType.ERROR, Gtk.ButtonsType.OK, "Invalid session name.");
+					error_dialog.run ();
+					error_dialog.destroy ();
+				} else {
+					stream.rename (name);
+				}
+			}
+			dialog.destroy ();
+		}
+	}
+
+	/**
+	 * Rename the remote TMux window.
+	 */
+	[GtkCallback]
+	private void rename_window () {
+		var widget = notebook.get_nth_page (notebook.page) as Terminal;
+		if (widget != null) {
+			var tmux_window = ((!)widget).tmux_window;
+			var dialog = new Gtk.MessageDialog (this, Gtk.DialogFlags.MODAL,  Gtk.MessageType.QUESTION, Gtk.ButtonsType.OK_CANCEL, "Rename window on “%s”:", tmux_window.title);
+			var entry = new Gtk.Entry ();
+			entry.text = tmux_window.title;
+			entry.activates_default = true;
+			dialog.get_content_area ().pack_end (entry);
+			entry.show ();
+			dialog.set_default_response (Gtk.ResponseType.OK);
+			if (dialog.run () == Gtk.ResponseType.OK) {
+				var name = entry.text.strip ();
+				if (name.length == 0) {
+					var error_dialog = new Gtk.MessageDialog (this, Gtk.DialogFlags.MODAL,  Gtk.MessageType.ERROR, Gtk.ButtonsType.OK, "Invalid window name.");
+					error_dialog.run ();
+					error_dialog.destroy ();
+				} else {
+					tmux_window.rename (name);
+				}
+			}
+			dialog.destroy ();
+		}
+	}
+
 	[GtkCallback]
 	private void on_about () {
 		Gtk.show_about_dialog (this,
