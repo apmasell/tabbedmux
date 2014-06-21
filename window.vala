@@ -363,7 +363,7 @@ public class TabbedMux.Window : Gtk.ApplicationWindow {
 	private void on_copy () {
 		var widget = notebook.get_nth_page (notebook.page) as Terminal;
 		if (widget != null) {
-			((!)widget).copy_primary ();
+			((!)widget).copy_clipboard ();
 		}
 	}
 
@@ -371,7 +371,7 @@ public class TabbedMux.Window : Gtk.ApplicationWindow {
 	private void on_paste () {
 		var widget = notebook.get_nth_page (notebook.page) as Terminal;
 		if (widget != null) {
-			((!)widget).paste_primary ();
+			((!)widget).paste_clipboard ();
 		}
 	}
 
