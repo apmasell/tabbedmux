@@ -119,14 +119,14 @@ public class TabbedMux.Window : Gtk.ApplicationWindow {
 		sender.update ((session, binary) => {
 				       var open_item = new LocalSessionItem (session, binary);
 				       var remove_item = new RemoveLocalSessionItem (sender, session, binary);
-				       remove_item.sensitive = open_item.sensitive = !is_stream_active (open_item);
+				       open_item.sensitive = !is_stream_active (open_item);
 				       saved_menu.add (open_item);
 				       remove_saved_menu.add (remove_item);
 				       non_empty = true;
 			       }, (session, host, port, username, binary) => {
 				       var open_item = new SshSessionItem (session, host, port, username, binary);
 				       var remove_item = new RemoveSshSessionItem (sender, session, host, port, username, binary);
-				       remove_item.sensitive = open_item.sensitive = !is_stream_active (open_item);
+				       open_item.sensitive = !is_stream_active (open_item);
 				       saved_menu.add (open_item);
 				       remove_saved_menu.add (remove_item);
 				       non_empty = true;
