@@ -48,13 +48,13 @@
                       </object>
                     </child>
                     <child>
-                      <object class="GtkImageMenuItem" id="kill_session_item">
+                      <object class="GtkImageMenuItem" id="kill_window_item">
                         <property name="label">gtk-close</property>
                         <property name="visible">True</property>
                         <property name="can_focus">False</property>
                         <property name="use_underline">True</property>
                         <property name="use_stock">True</property>
-                        <signal name="activate" handler="destroy_session" swapped="no"/>
+                        <signal name="activate" handler="destroy_window" swapped="no"/>
                       </object>
                     </child>
                     <child>
@@ -99,6 +99,15 @@
                             <property name="can_focus">False</property>
                           </object>
                         </child>
+                      </object>
+                    </child>
+                    <child>
+                      <object class="GtkMenuItem" id="kill_session">
+                        <property name="visible">True</property>
+                        <property name="can_focus">False</property>
+                        <property name="label" translatable="yes">Terminate Session</property>
+                        <property name="use_underline">True</property>
+                        <signal name="activate" handler="destroy_session" swapped="no"/>
                       </object>
                     </child>
                     <child>

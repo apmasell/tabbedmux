@@ -84,9 +84,20 @@ namespace TabbedMux {
 		}
 
 		/**
-		 * As the remote TMux server to die in a fire.
+		 * Kill the current session.
 		 */
 		public void destroy () {
+			try {
+				exec ("kill-session");
+			} catch (IOError e) {
+				critical ("%s:%s: Failed to kill session: %s", name, session_name, e.message);
+			}
+		}
+
+		/**
+		 * Ask the remote TMux server to die in a fire.
+		 */
+		public void kill () {
 			try {
 				exec ("kill-server");
 			} catch (IOError e) {

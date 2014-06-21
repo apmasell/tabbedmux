@@ -216,7 +216,7 @@ public class TabbedMux.Window : Gtk.ApplicationWindow {
 	 * Remove the current window.
 	 */
 	[GtkCallback]
-	private void destroy_session () {
+	private void destroy_window () {
 		var widget = notebook.get_nth_page (notebook.page) as Terminal;
 		if (widget != null) {
 			var window = ((!)widget).tmux_window;
@@ -233,6 +233,22 @@ public class TabbedMux.Window : Gtk.ApplicationWindow {
 	 */
 	[GtkCallback]
 	private void destroy_server () {
+		var widget = notebook.get_nth_page (notebook.page) as Terminal;
+		if (widget != null) {
+			var stream = ((!)widget).tmux_window.stream;
+			var dialog = new Gtk.MessageDialog (this, Gtk.DialogFlags.MODAL,  Gtk.MessageType.WARNING, Gtk.ButtonsType.YES_NO, "Kill TMux server running on %s and terminate all running sessions and their windows and processes?", stream.name);
+			if (dialog.run () == Gtk.ResponseType.YES) {
+				stream.kill ();
+			}
+			dialog.destroy ();
+		}
+	}
+
+	/**
+	 * Kill the remote TMux session for the current window.
+	 */
+	[GtkCallback]
+	private void destroy_session () {
 		var widget = notebook.get_nth_page (notebook.page) as Terminal;
 		if (widget != null) {
 			var stream = ((!)widget).tmux_window.stream;
