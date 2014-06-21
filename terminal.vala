@@ -57,6 +57,20 @@ public class TabbedMux.Terminal : Vte.Terminal {
 		queue_draw ();
 	}
 
+	public void adjust_font (bool increase) {
+		var font = font_desc;
+		font.set_size (font.get_size () + Pango.SCALE * (increase ? 1 : -1));
+		if (font.get_size () > Pango.SCALE) {
+			font_desc = font;
+		} else {
+			message ("Termintal font size (%d) too small. Not adjusting.", font.get_size ());
+		}
+	}
+
+	public void reset_font () {
+		font_desc = null;
+	}
+
 	/**
 	 * Pump Vte keyboard data to TMux.
 	 */

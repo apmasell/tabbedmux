@@ -325,6 +325,30 @@ public class TabbedMux.Window : Gtk.ApplicationWindow {
 	}
 
 	[GtkCallback]
+	private void zoom_in () {
+		var widget = notebook.get_nth_page (notebook.page) as Terminal;
+		if (widget != null) {
+			((!)widget).adjust_font (true);
+		}
+	}
+
+	[GtkCallback]
+	private void zoom_out () {
+		var widget = notebook.get_nth_page (notebook.page) as Terminal;
+		if (widget != null) {
+			((!)widget).adjust_font (false);
+		}
+	}
+
+	[GtkCallback]
+	private void zoom_normal () {
+		var widget = notebook.get_nth_page (notebook.page) as Terminal;
+		if (widget != null) {
+			((!)widget).reset_font ();
+		}
+	}
+
+	[GtkCallback]
 	private void on_about () {
 		Gtk.show_about_dialog (this,
 				       "program-name", "TabbedMux",
