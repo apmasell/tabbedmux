@@ -487,9 +487,9 @@ namespace TabbedMux {
 		buffer.append (parts[0].compress ());
 		for (var it = 1; it < parts.length; it++) {
 			buffer.append_c (' ');
-			buffer.append (parts[it].compress ());
+			buffer.append (parts[it]);
 		}
-		return buffer.str;
+		return buffer.str.compress ();
 	}
 
 	private int parse_window (string str) {
