@@ -45,7 +45,7 @@ public class TabbedMux.OpenDialog : Gtk.Dialog {
 		try {
 			TMuxStream? stream;
 
-			var session_name = session.text.strip ();
+			var session_name = strip (session.text);
 			if (":" in session_name) {
 				show_error (this, "Session names may not contain colons.");
 				return;
@@ -54,22 +54,22 @@ public class TabbedMux.OpenDialog : Gtk.Dialog {
 				session_name = "0";
 			}
 
-			var tmux_binary = binary.text.strip ();
+			var tmux_binary = strip (binary.text);
 			if (tmux_binary.length == 0) {
 				tmux_binary = "tmux";
 			}
 
 			if (remote_connection.active) {
-				var hostname = host.text.strip ();
+				var hostname = strip (host.text);
 				if (hostname.length == 0) {
 					show_error (this, "Host is missing.");
 					return;
 				}
 
 				uint64 port_number = 22;
-				var port_text = port.text.strip ();
+				var port_text = strip (port.text);
 				if (port_text.length != 0) {
-					if (!uint64.try_parse (port.text.strip (), out port_number)) {
+					if (!uint64.try_parse (strip (port.text), out port_number)) {
 						show_error (this, "Port is too large.");
 						return;
 					}
@@ -78,7 +78,7 @@ public class TabbedMux.OpenDialog : Gtk.Dialog {
 						return;
 					}
 				}
-				var username = user.text.strip ();
+				var username = strip (user.text);
 				if (username.length == 0) {
 					username = Environment.get_user_name ();
 				}

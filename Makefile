@@ -5,6 +5,7 @@ DESTDIR ?=
 SOURCES = \
 	application.vala \
 	keyboard_interactive.vala \
+	misc.c \
 	open.vala \
 	password_adapter.c \
 	resources.c \

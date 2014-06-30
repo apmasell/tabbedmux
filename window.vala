@@ -282,7 +282,7 @@ public class TabbedMux.Window : Gtk.ApplicationWindow {
 			entry.show ();
 			dialog.set_default_response (Gtk.ResponseType.OK);
 			if (dialog.run () == Gtk.ResponseType.OK) {
-				var name = entry.text.strip ();
+				var name = strip (entry.text);
 				if (name.length == 0 || ":" in name) {
 					var error_dialog = new Gtk.MessageDialog (this, Gtk.DialogFlags.MODAL,  Gtk.MessageType.ERROR, Gtk.ButtonsType.OK, "Invalid session name.");
 					error_dialog.run ();
@@ -311,7 +311,7 @@ public class TabbedMux.Window : Gtk.ApplicationWindow {
 			entry.show ();
 			dialog.set_default_response (Gtk.ResponseType.OK);
 			if (dialog.run () == Gtk.ResponseType.OK) {
-				var name = entry.text.strip ();
+				var name = strip (entry.text);
 				if (name.length == 0) {
 					var error_dialog = new Gtk.MessageDialog (this, Gtk.DialogFlags.MODAL,  Gtk.MessageType.ERROR, Gtk.ButtonsType.OK, "Invalid window name.");
 					error_dialog.run ();
