@@ -187,7 +187,7 @@ public class TabbedMux.Window : Gtk.ApplicationWindow {
 		var id = notebook.append_page (terminal, terminal.tab_label);
 		notebook.set_tab_reorderable (terminal, true);
 		terminal.selection_changed.connect (unowned_this.on_selection_changed);
-		unsized_children.add(terminal);
+		unsized_children.add (terminal);
 		message ("Adding window from %s.", window.stream.name);
 		show_all ();
 		notebook.set_current_page (id);
