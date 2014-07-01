@@ -4,8 +4,8 @@
 
 typedef void (
 	*TabbedMuxTMuxSshStreamInteractiveAuthentication) (
-	const gchar * username,
-	const gchar * instruction,
+	const gchar *username,
+	const gchar *instruction,
 	const LIBSSH2_USERAUTH_KBDINT_PROMPT * prompts,
 	int prompts_length,
 	LIBSSH2_USERAUTH_KBDINT_RESPONSE * responses,
@@ -40,7 +40,7 @@ void response_callback(
  */
 int tabbed_mux_tmux_ssh_stream_password_adapter(
 	LIBSSH2_SESSION * session,
-	const gchar * username,
+	const gchar *username,
 	TabbedMuxTMuxSshStreamInteractiveAuthentication handler,
 	void *handler_target) {
 	void **abstract;
@@ -64,7 +64,7 @@ int tabbed_mux_tmux_ssh_stream_password_adapter(
  */
 int tabbed_mux_tmux_ssh_stream_password_simple(
 	LIBSSH2_SESSION * session,
-	const gchar * username,
+	const gchar *username,
 	TabbedMuxTMuxSshStreamInteractiveAuthentication handler,
 	void *handler_target) {
 
