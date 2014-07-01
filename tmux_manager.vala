@@ -84,6 +84,17 @@ namespace TabbedMux {
 		}
 
 		/**
+		 * Delete a TMux buffer.
+		 */
+		public void delete_buffer (uint buffer = 0) {
+			try {
+				exec (@"delete-buffer -b $(buffer)");
+			} catch (IOError e) {
+				critical ("%s:%s: Delete buffer failed: %s", name, session_name, e.message);
+			}
+		}
+
+		/**
 		 * Kill the current session.
 		 */
 		public void destroy () {
@@ -113,6 +124,17 @@ namespace TabbedMux {
 				exec (@"rename-session $(Shell.quote(name))");
 			} catch (IOError e) {
 				critical ("%s:%s: Failed to rename session: %s", name, session_name, e.message);
+			}
+		}
+
+		/**
+		 * Set a TMux buffer.
+		 */
+		public void set_buffer (string data, uint buffer = 0) {
+			try {
+				exec (@"set-buffer -b $(buffer) $(Shell.quote (data))");
+			} catch (IOError e) {
+				critical ("%s:%s: Paste buffer failed: %s", name, session_name, e.message);
 			}
 		}
 
@@ -419,6 +441,17 @@ namespace TabbedMux {
 				stream.exec (@"kill-window -t @$(id)");
 			} catch (IOError e) {
 				critical ("%s:%s:%d: Kill window failed: %s", stream.name, stream.session_name, id, e.message);
+			}
+		}
+
+		/**
+		 * Paste a TMux buffer.
+		 */
+		public void paste_buffer (uint buffer = 0) {
+			try {
+				stream.exec (@"paste-buffer -p -b $(buffer) -t @$(id)");
+			} catch (IOError e) {
+				critical ("%s:%s:%d: Paste buffer failed: %s", stream.name, stream.session_name, id, e.message);
 			}
 		}
 

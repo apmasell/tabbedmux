@@ -369,10 +369,27 @@ public class TabbedMux.Window : Gtk.ApplicationWindow {
 	}
 
 	[GtkCallback]
+	private void copy_to_tmux () {
+		var widget = notebook.get_nth_page (notebook.page) as Terminal;
+		if (widget != null) {
+			var clipboard = Gtk.Clipboard.get_for_display (get_display (), Gdk.SELECTION_CLIPBOARD);
+			((!)widget).tmux_window.stream.set_buffer (clipboard.wait_for_text ());
+		}
+	}
+
+	[GtkCallback]
 	private void on_paste () {
 		var widget = notebook.get_nth_page (notebook.page) as Terminal;
 		if (widget != null) {
 			((!)widget).paste_clipboard ();
+		}
+	}
+
+	[GtkCallback]
+	private void paste_tmux () {
+		var widget = notebook.get_nth_page (notebook.page) as Terminal;
+		if (widget != null) {
+			((!)widget).tmux_window.paste_buffer ();
 		}
 	}
 
