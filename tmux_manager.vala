@@ -158,6 +158,9 @@ namespace TabbedMux {
 							 action = todo.action;
 							 window_id = todo.id;
 						 }
+						 if (action == NextOutput.CAPTURE && windows.has_key (window_id)) {
+							 windows[window_id].rx_data ("\033[2J".data);
+						 }
 						 string? output_line;
 						 while ((output_line = yield read_line_async (cancellable)) !=  null) {
 							 if (((!)output_line).has_prefix ("%end") || ((!)output_line).has_prefix ("%error")) {
@@ -176,6 +179,7 @@ namespace TabbedMux {
 									  var window = windows[window_id];
 									  if (((!)output_line).length > 0) {
 										  window.rx_data (((!)output_line).data);
+										  window.rx_data ("\r\n".data);
 									  }
 								  } else {
 									  warning ("%s:%s: Received capture for non-existent window %d.", name, session_name, window_id);
@@ -423,7 +427,7 @@ namespace TabbedMux {
 		 */
 		public void refresh () {
 			try {
-				stream.exec (@"capture-pane -p -e -q -J -t @$(id)", NextOutput.CAPTURE, id);
+				stream.exec (@"capture-pane -p -e -t @$(id)", NextOutput.CAPTURE, id);
 			} catch (IOError e) {
 				critical ("%s:%s:%d: Capture pane failed: %s", stream.name, stream.session_name, id, e.message);
 			}
