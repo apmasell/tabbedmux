@@ -66,7 +66,7 @@ public class TabbedMux.Window : Gtk.ApplicationWindow {
 	private Gee.Set<Terminal> unsized_children = new Gee.HashSet<Terminal> ();
 
 	internal Window (Application app) {
-		Object (application: app, title: "TabbedMux", show_menubar: true);
+		Object (application: app, title: "TabbedMux", show_menubar: true, icon_name: "utilities-terminal");
 		add_events (Gdk.EventMask.STRUCTURE_MASK | Gdk.EventMask.SUBSTRUCTURE_MASK);
 		this.set_default_size (600, 400);
 		if (app is Application) {
@@ -353,6 +353,7 @@ public class TabbedMux.Window : Gtk.ApplicationWindow {
 	private void on_about () {
 		Gtk.show_about_dialog (this,
 				       "program-name", "TabbedMux",
+				       "logo_icon_name", "utilities-terminal",
 				       "copyright", "Copyright 2013-2014 Andre Masella",
 				       "authors", new string[] { "Andre Masella" },
 				       "website", "https://github.com/apmasell/tabbedmux",
