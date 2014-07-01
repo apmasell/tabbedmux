@@ -7,3 +7,4 @@ debian/files
 tabbedmux
 !password_adapter.c
 !misc.c
+!tmux_decode.c

@@ -141,14 +141,15 @@ namespace TabbedMux {
 						message ("%s:%s: End of stream.", name, session_name);
 						return "No more data to read";
 					}
-					var parts = ((!)str).split (" ");
-					message ("%s:%s: Processing: %s", name, session_name, parts[0]);
-					switch (parts[0]) {
+					var decoder = Decoder ((!)(owned) str);
+					message ("%s:%s: Processing: %s", name, session_name, decoder.command);
+					switch (decoder.command) {
 					 /*
 					  * TMux sent some kind of data. Find the matching cookie and process the data.
 					  */
 					 case "%begin":
-						 var output_num = int.parse (parts[2]);
+						 decoder.pop ();
+						 var output_num = decoder.pop_id ();
 						 NextOutput action = NextOutput.NONE;
 						 int window_id = 0;
 						 if (outputs.has_key (output_num)) {
@@ -190,31 +191,27 @@ namespace TabbedMux {
 							   */
 							  case NextOutput.WINDOWS:
 								  message ("%s:%s: Received pane information. %s", name, session_name, (!)output_line);
-								  var info_parts = ((!)output_line).split (":");
-								  if (info_parts.length > 3) {
-									  var id = parse_window (info_parts[0]);
-									  var width = int.parse (info_parts[1]);
-									  var height = int.parse (info_parts[2]);
-									  var title = compress_and_join (info_parts[3 : info_parts.length]);
-									  TMuxWindow window;
-									  if (windows.has_key (id)) {
-										  window = windows[id];
-									  } else {
-										  window = new TMuxWindow (this, id);
-										  windows[id] = window;
-										  window.title = title;
-										  window_created (window);
-										  window.refresh ();
-									  }
-									  message ("%s:%s: Got %d %d for @%d. Title is: %s", name, session_name, width, height, id, title);
-									  if (window.title != title) {
-										  window.title = title;
-										  window.renamed ();
-									  }
-									  window.set_size (width, height);
+								  var info_decoder = Decoder ((!)(owned) output_line, false, ':');
+								  var id = info_decoder.pop_id ();
+								  var width = info_decoder.pop_id ();
+								  var height = info_decoder.pop_id ();
+								  var title = info_decoder.get_remainder ();
+								  TMuxWindow window;
+								  if (windows.has_key (id)) {
+									  window = windows[id];
 								  } else {
-									  critical ("%s:%s: Cannot parse list-windows output: %s.", name, session_name, (!)output_line);
+									  window = new TMuxWindow (this, id);
+									  windows[id] = window;
+									  window.title = title;
+									  window_created (window);
+									  window.refresh ();
 								  }
+								  message ("%s:%s: Got %d %d for @%d. Title is: %s", name, session_name, width, height, id, title);
+								  if (window.title != title) {
+									  window.title = title;
+									  window.renamed ();
+								  }
+								  window.set_size (width, height);
 								  break;
 
 							  case NextOutput.NONE:
@@ -240,8 +237,8 @@ namespace TabbedMux {
 					  */
 					 case "%exit":
 						 message ("%s:%s: Explicit exit request from TMux.", name, session_name);
-						 if (parts.length > 1) {
-							 return compress_and_join (parts[2 : parts.length]);
+						 if (str != null) {
+							 return str;
 						 } else {
 							 return "TMux server shutdown.";
 						 }
@@ -259,9 +256,9 @@ namespace TabbedMux {
 					  * Pretty new name.
 					  */
 					 case "%session-renamed":
-						 if (id == parse_window (parts[1])) {
+						 if (id == decoder.pop_id ()) {
 
-							 session_name = compress_and_join (parts[2 : parts.length]);
+							 session_name = decoder.get_remainder ();
 							 renamed ();
 						 }
 						 break;
@@ -278,7 +275,7 @@ namespace TabbedMux {
 					  * Window closed. Kill the tab.
 					  */
 					 case "%window-close":
-						 var window_id = parse_window (parts[1]);
+						 var window_id = decoder.pop_id ();
 						 if (windows.has_key (window_id)) {
 							 windows[window_id].closed ();
 							 windows.unset (window_id);
@@ -290,10 +287,10 @@ namespace TabbedMux {
 					  * Window renamed. Update tab.
 					  */
 					 case "%window-renamed":
-						 var window_id = parse_window (parts[1]);
+						 var window_id = decoder.pop_id ();
 						 if (windows.has_key (window_id)) {
 							 var window = windows[window_id];
-							 window.title = compress_and_join (parts[2 : parts.length]);
+							 window.title = decoder.get_remainder ();
 							 window.renamed ();
 							 message ("%s:%s: Renaming window %d.", name, session_name, window_id);
 						 }
@@ -303,9 +300,9 @@ namespace TabbedMux {
 					  * Window size changed. Update the terminal size in the tab.
 					  */
 					 case "%layout-change":
-						 var window_id = parse_window (parts[1]);
+						 var window_id = decoder.pop_id ();
 						 if (windows.has_key (window_id)) {
-							 var layout = parts[2].split (",");
+							 var layout = decoder.get_remainder ().split (",");
 							 var window = windows[window_id];
 							 var coords = layout[1].split ("x");
 							 window.set_size (int.parse (coords[0]), int.parse (coords[1]));
@@ -317,10 +314,11 @@ namespace TabbedMux {
 					  * Pump data to Vte.
 					  */
 					 case "%output":
-						 var window_id = parse_window (parts[1]);
+						 var window_id = decoder.pop_id ();
 						 if (windows.has_key (window_id)) {
 							 var window = windows[window_id];
-							 var text = compress_and_join (parts[2 : parts.length]);
+							 decoder.pop ();
+							 var text = decoder.get_remainder ();
 							 window.rx_data (text.data);
 							 message ("%s:%s: Output for window %d.", name, session_name, window_id);
 						 }
@@ -477,22 +475,5 @@ namespace TabbedMux {
 				critical ("%s:%s:%d: Send keys failed: %s", stream.name, stream.session_name, id, e.message);
 			}
 		}
-	}
-
-	private string compress_and_join (string[] parts) {
-		if (parts.length == 0) {
-			return "";
-		}
-		var buffer = new StringBuilder ();
-		buffer.append (parts[0].compress ());
-		for (var it = 1; it < parts.length; it++) {
-			buffer.append_c (' ');
-			buffer.append (parts[it]);
-		}
-		return buffer.str.compress ();
-	}
-
-	private int parse_window (string str) {
-		return int.parse (str[1 : str.length]);
 	}
 }

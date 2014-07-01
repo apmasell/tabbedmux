@@ -12,6 +12,8 @@ SOURCES = \
 	saved_sessions.vala \
 	tabbedmux.vala \
 	terminal.vala \
+	tmux_decode.c \
+	tmux_decode.vapi \
 	tmux_local.vala \
 	tmux_manager.vala \
 	tmux_ssh.vala \
