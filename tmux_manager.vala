@@ -148,7 +148,7 @@ namespace TabbedMux {
 					  * TMux sent some kind of data. Find the matching cookie and process the data.
 					  */
 					 case "%begin":
-						 decoder.pop ();
+						 var time = decoder.pop_id ();
 						 var output_num = decoder.pop_id ();
 						 NextOutput action = NextOutput.NONE;
 						 int window_id = 0;
@@ -159,7 +159,13 @@ namespace TabbedMux {
 							 window_id = todo.id;
 						 }
 						 string? output_line;
-						 while ((output_line = yield read_line_async (cancellable)) !=  null && !(((!)output_line).has_prefix ("%end") || ((!)output_line).has_prefix ("%error"))) {
+						 while ((output_line = yield read_line_async (cancellable)) !=  null) {
+							 if (((!)output_line).has_prefix ("%end") || ((!)output_line).has_prefix ("%error")) {
+								 var temp = Decoder (((!)output_line).dup ());
+								 if (temp.pop_id () == time && temp.pop_id () == output_num) {
+									 break;
+								 }
+							 }
 
 							 switch (action) {
 							  /*
