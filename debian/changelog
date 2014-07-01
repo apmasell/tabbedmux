@@ -1,3 +1,17 @@
+tabbedmux (1.2~ppa0) trusty; urgency=medium
+
+  * Allow access to TMux buffers
+  * Fix terminal corruption on capture
+  * Pass click events to Vte correctly
+  * Improve parsing of TMux data
+  * Fix sizing of new tabs
+  * Make copy/paste use clipboard instead of primary
+  * Allow adjusting the font size
+  * Allow renaming windows and sessions
+  * Allow killing the window, session, and server
+
+ -- Andre Masella <andre@masella.name>  Tue, 01 Jul 2014 07:59:22 -0400
+
 tabbedmux (1.1~ppa1) trusty; urgency=medium
 
   * Fix install script 
