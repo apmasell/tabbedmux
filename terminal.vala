@@ -47,7 +47,7 @@ public class TabbedMux.Terminal : Vte.Terminal {
 				return true;
 			}
 		}
-		return false;
+		return base.button_press_event(event);
 	}
 
 	public void update_tab_label () {
