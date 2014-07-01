@@ -21,8 +21,23 @@ SOURCES = \
 	window.vala \
 	$(NULL)
 
+VALA_PKGS = \
+	--pkg gee-0.8 \
+	--pkg gio-unix-2.0 \
+	--pkg gtk+-3.0 \
+	--pkg libnotify \
+	--pkg libssh2 \
+	--pkg vte-2.90 \
+	$(NULL)
+
 tabbedmux: $(SOURCES)
-	valac -v --debug --target-glib=2.38 --save-temps --vapidir vapis --pkg libssh2 --pkg gtk+-3.0 --pkg gee-0.8 --pkg gio-unix-2.0 --pkg libnotify --pkg vte-2.90 $^ --gresources resources.xml -o $@
+	valac \
+		--debug \
+		--gresources resources.xml \
+		--save-temps \
+		--target-glib=2.38 \
+		--vapidir vapis \
+		$(VALA_PKGS) $^ -o $@
 
 GLIB_COMPILE_RESOURCES=glib-compile-resources
 
