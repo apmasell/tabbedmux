@@ -40,18 +40,17 @@ int tabbed_mux_decoder_pop_id(
 	gchar *end;
 	gint result;
 
-	if (self->rest[0] == '@') {
+	if (self->rest[0] == '@' || self->rest[0] == '%') {
 		self->rest++;
 	}
 	result = strtol(self->rest, &end, 10);
+	if (end == self->rest) {
+		g_warning("Could not parse window ID from \"%s\".", self->rest);
+	}
 	if (*end == self->split) {
 		end++;
 	}
-	if (*end == '\0') {
-		self->rest = NULL;
-	} else {
-		self->rest = end;
-	}
+	self->rest = (*end == '\0') ? NULL : end;
 	return result;
 }
 
