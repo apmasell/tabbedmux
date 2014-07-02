@@ -52,6 +52,9 @@ internal class TabbedMux.TMuxSshStream : TMuxStream {
 				 * If there is either no data or reading would block,
 				 * Take our current continuation and make it the callback for data being present in the underlying GIO socket (libssh2 isn't helpful here) and put it in the dispatch loop, then wait.
 				 */
+				if (source != null) {
+					warning("SSH somehow re-entered an active asynchronous callback.");
+				}
 				SourceFunc async_continue = read_line_async.callback;
 				source = socket.create_source (IOCondition.IN, cancellable);
 				((!)source).set_callback ((socket, condition) => { async_continue (); return false; });
