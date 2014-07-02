@@ -1,6 +1,5 @@
 #include <glib.h>
 #include <string.h>
-#include <stdio.h>
 
 gchar *tabbed_mux_strip(
 	const gchar *input) {
