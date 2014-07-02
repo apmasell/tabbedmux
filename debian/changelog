@@ -1,3 +1,12 @@
+tabbedmux (1.3~ppa0) trusty; urgency=medium
+
+  * Read from TMux on idle
+  * Bold “sibling” tabs
+  * Fix parsing issues
+  * Add icons
+
+ -- Andre Masella <andre@masella.name>  Wed, 02 Jul 2014 19:32:48 -0400
+
 tabbedmux (1.2~ppa0) trusty; urgency=medium
 
   * Allow access to TMux buffers
