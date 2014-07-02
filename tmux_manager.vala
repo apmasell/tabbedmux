@@ -349,7 +349,6 @@ namespace TabbedMux {
 						 var window_id = decoder.pop_id ();
 						 if (windows.has_key (window_id)) {
 							 var window = windows[window_id];
-							 decoder.pop ();
 							 var text = decoder.get_remainder ();
 							 window.rx_data (text.data);
 							 message ("%s:%s: Output for window %d.", name, session_name, window_id);
