@@ -428,6 +428,13 @@ public class TabbedMux.Window : Gtk.ApplicationWindow {
 				unsized_children.remove ((!)terminal);
 			}
 			copy_item.sensitive = ((!)terminal).get_has_selection ();
+			var stream = ((!)terminal).tmux_window.stream;
+			for (var it = 0; it < notebook.get_n_pages (); it++) {
+				var other_terminal = notebook.get_nth_page (it) as Terminal;
+				if (other_terminal != null) {
+					((!)other_terminal).sibling_selected (((!)other_terminal).tmux_window.stream == stream);
+				}
+			}
 		} else {
 			message ("Non-terminal found in window.");
 		}

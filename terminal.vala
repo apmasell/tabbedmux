@@ -106,4 +106,14 @@ public class TabbedMux.Terminal : Vte.Terminal {
 		set_size (tmux_window.width, tmux_window.height);
 		queue_resize ();
 	}
+
+	public void sibling_selected (bool selected) {
+		if (selected) {
+			var description = new Pango.FontDescription ();
+			description.set_weight (Pango.Weight.BOLD);
+			tab_label.override_font (description);
+		} else {
+			tab_label.override_font (null);
+		}
+	}
 }
