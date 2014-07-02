@@ -199,9 +199,9 @@ namespace TabbedMux {
 							  case NextOutput.CAPTURE :
 								  if (windows.has_key (window_id)) {
 									  var window = windows[window_id];
+									  window.rx_data ("\r\n".data);
 									  if (((!)output_line).length > 0) {
 										  window.rx_data (((!)output_line).data);
-										  window.rx_data ("\r\n".data);
 									  }
 								  } else {
 									  warning ("%s:%s: Received capture for non-existent window %d.", name, session_name, window_id);
