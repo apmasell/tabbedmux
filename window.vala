@@ -14,7 +14,7 @@ public class TabbedMux.MenuItem : Gtk.MenuItem {
 	}
 
 	private void on_rename () {
-		set_label (@"$(stream.session_name) - $(stream.name)");
+		set_label (@"$(stream.name) - $(stream.session_name)");
 	}
 }
 
