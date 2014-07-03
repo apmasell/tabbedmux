@@ -93,7 +93,7 @@ public class TabbedMux.Window : Gtk.ApplicationWindow {
 			close.add (new Gtk.Image.from_gicon (new ThemedIcon.with_default_fallbacks ("window-close-symbolic"), Gtk.IconSize.MENU));
 			close.show_all ();
 			notebook.set_action_widget (close, Gtk.PackType.END);
-			close.clicked.connect (unowned_this.destroy_session);
+			close.clicked.connect (unowned_this.destroy_window);
 		}
 	}
 
