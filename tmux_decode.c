@@ -43,7 +43,7 @@ int tabbed_mux_decoder_pop_id(
 	if (self->rest[0] == '@' || self->rest[0] == '%') {
 		self->rest++;
 	}
-	result = strtol(self->rest, &end, 10);
+	result = g_ascii_strtoll(self->rest, &end, 10);
 	if (end == self->rest) {
 		g_warning("Could not parse window ID from \"%s\".", self->rest);
 	}
