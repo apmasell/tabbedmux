@@ -3,7 +3,7 @@
 
 void tabbed_mux_decoder_init(
 	struct tabbed_mux_decoder *self,
-	char *str,
+	gchar *str,
 	gboolean command,
 	gchar split) {
 	self->str = str;
@@ -35,7 +35,7 @@ void tabbed_mux_decoder_pop(
 	}
 }
 
-int tabbed_mux_decoder_pop_id(
+gint tabbed_mux_decoder_pop_id(
 	struct tabbed_mux_decoder *self) {
 	gchar *end;
 	gint result;
@@ -54,12 +54,12 @@ int tabbed_mux_decoder_pop_id(
 	return result;
 }
 
-char *tabbed_mux_decoder_get_command(
+gchar *tabbed_mux_decoder_get_command(
 	struct tabbed_mux_decoder *self) {
 	return self->str;
 }
 
-char *tabbed_mux_decoder_get_remainder(
+gchar *tabbed_mux_decoder_get_remainder(
 	struct tabbed_mux_decoder *self) {
 	const gchar *num_start;
 	gchar *dest;

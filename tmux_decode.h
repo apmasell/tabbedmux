@@ -3,14 +3,14 @@
 #        include <glib.h>
 
 struct tabbed_mux_decoder {
-	char *str;
-	char *rest;
-	char split;
+	gchar *str;
+	gchar *rest;
+	gchar split;
 };
 
 void tabbed_mux_decoder_init(
 	struct tabbed_mux_decoder *self,
-	char *str,
+	gchar *str,
 	gboolean command,
 	gchar split);
 void tabbed_mux_decoder_destroy(
@@ -19,13 +19,13 @@ void tabbed_mux_decoder_destroy(
 void tabbed_mux_decoder_pop(
 	struct tabbed_mux_decoder *self);
 
-int tabbed_mux_decoder_pop_id(
+gint tabbed_mux_decoder_pop_id(
 	struct tabbed_mux_decoder *self);
 
-char *tabbed_mux_decoder_get_command(
+gchar *tabbed_mux_decoder_get_command(
 	struct tabbed_mux_decoder *self);
 
-char *tabbed_mux_decoder_get_remainder(
+gchar *tabbed_mux_decoder_get_remainder(
 	struct tabbed_mux_decoder *self);
 
 #endif
