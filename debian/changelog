@@ -1,3 +1,12 @@
+tabbedmux (1.4~ppa0) trusty; urgency=medium
+
+  * Break send-keys into short blocks (avoids problem in tmux 1.8)
+  * Fix bug causing infintie loop when remote end dies unexpectedly
+  * Wire notebook close button to correct destroy function
+  * Rename new/disconnect menu items to be the same order
+
+ -- Andre Masella <andre@masella.name>  Sun, 13 Jul 2014 14:27:50 -0400
+
 tabbedmux (1.3~ppa0) trusty; urgency=medium
 
   * Read from TMux on idle
