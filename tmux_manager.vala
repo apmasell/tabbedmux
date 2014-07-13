@@ -1,6 +1,6 @@
 namespace TabbedMux {
 	public const string TERM_TYPE = "xterm";
-	private extern async void wait_idle();
+	private extern async void wait_idle ();
 
 	/**
 	 * The kind of data we expect back from TMux. This controls how the data will be parsed.
@@ -360,7 +360,7 @@ namespace TabbedMux {
 						 critical ("%s:%s: Unrecognised command from TMux: %s", name, session_name, (!)str);
 						 break;
 					}
-					yield wait_idle();
+					yield wait_idle ();
 				} catch (Error e) {
 					critical ("%s:%s: %s", name, session_name, e.message);
 					return e.message;
