@@ -47,13 +47,13 @@ internal class TabbedMux.TMuxSshStream : TMuxStream {
 			if (result > 0) {
 				/* Stuff any data into our buffer. */
 				buffer.append_len ((string) data, result);
-			} else if ((SSH2.Error)result == SSH2.Error.AGAIN || result == 0) {
+			} else if ((SSH2.Error)result == SSH2.Error.AGAIN || result == 0 && channel.eof () != 1) {
 				/*
 				 * If there is either no data or reading would block,
 				 * Take our current continuation and make it the callback for data being present in the underlying GIO socket (libssh2 isn't helpful here) and put it in the dispatch loop, then wait.
 				 */
 				if (source != null) {
-					warning("SSH somehow re-entered an active asynchronous callback.");
+					warning ("SSH somehow re-entered an active asynchronous callback.");
 				}
 				SourceFunc async_continue = read_line_async.callback;
 				source = socket.create_source (IOCondition.IN, cancellable);
@@ -77,6 +77,10 @@ internal class TabbedMux.TMuxSshStream : TMuxStream {
 					throw new IOError.CLOSED (@"Remote TMux terminated with $(channel.exit_status).");
 				}
 				return null;
+			} else if (channel.eof () == 1) {
+				return null;
+			} else {
+				assert_not_reached ();
 			}
 		}
 		/* Take the whole line from the buffer and return it. */
