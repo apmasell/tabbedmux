@@ -510,8 +510,13 @@ namespace TabbedMux {
 		public void tx_data (uint8[] text) {
 			try {
 				var command = new StringBuilder ();
-				command.append_printf ("send-keys -t @%d", id);
 				for (var it = 0; it < text.length; it++) {
+					if (it % 50 == 0) {
+						if (it > 0) {
+							stream.exec (command.str);
+						}
+						command.printf ("send-keys -t @%d", id);
+					}
 					command.append_printf (" 0x%02x", text[it]);
 				}
 				stream.exec (command.str);
