@@ -49,6 +49,19 @@ internal class TabbedMux.TMuxSshStream : TMuxStream {
 				buffer.append_len ((string) data, result);
 			} else if ((SSH2.Error)result == SSH2.Error.AGAIN || result == 0 && channel.eof () != 1) {
 				/*
+				 * Perform an obligatory keep-alive.
+				 */
+				int seconds_to_next;
+				if (session.send_keep_alive (out seconds_to_next) < 0) {
+					char[] error_message;
+					session.get_last_error (out error_message);
+					critical ("%s:%s: %zd %s", name, session_name, result, (string) error_message);
+					if (channel.eof () != 0 && channel.wait_closed () != SSH2.Error.NONE) {
+						throw new IOError.CLOSED (@"Remote TMux terminated with $(channel.exit_status).");
+					}
+					return null;
+				}
+				/*
 				 * If there is either no data or reading would block,
 				 * Take our current continuation and make it the callback for data being present in the underlying GIO socket (libssh2 isn't helpful here) and put it in the dispatch loop, then wait.
 				 */
@@ -58,6 +71,11 @@ internal class TabbedMux.TMuxSshStream : TMuxStream {
 				SourceFunc async_continue = read_line_async.callback;
 				source = socket.create_source (IOCondition.IN, cancellable);
 				((!)source).set_callback ((socket, condition) => { async_continue (); return false; });
+				if (seconds_to_next > 0) {
+					var timeout = new TimeoutSource.seconds (seconds_to_next);
+					timeout.set_callback (() => false);
+					((!)source).add_child_source (timeout);
+				}
 				((!)source).attach (MainContext.default ());
 				yield;
 				source = null;
@@ -208,6 +226,7 @@ internal class TabbedMux.TMuxSshStream : TMuxStream {
 		 * Create an Stream and return it.
 		 */
 		session.blocking = false;
+		session.set_keep_alive (true, 10);
 		return new TMuxSshStream (session_name, host, port, username, binary, socket, (!)(owned) session, (!)(owned) channel);
 	}
 }
