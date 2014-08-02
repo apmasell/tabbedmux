@@ -21,7 +21,14 @@ public class TabbedMux.TMuxLocalStream : TMuxStream {
 		Pid child_pid;
 		int standard_input;
 		int standard_output;
-		if (Process.spawn_async_with_pipes (null, { binary, "-C", "new", "-A", "-s", session_name }, { "TERM", TERM_TYPE }, SpawnFlags.SEARCH_PATH, null, out child_pid, out standard_input, out standard_output)) {
+		string[] environment = { "TERM", TERM_TYPE };
+		foreach (var variable in Environment.list_variables ()) {
+			if (variable != "TERM") {
+				environment += variable;
+				environment += Environment.get_variable (variable);
+			}
+		}
+		if (Process.spawn_async_with_pipes (null, { binary, "-C", "new", "-A", "-s", session_name }, environment, SpawnFlags.SEARCH_PATH, null, out child_pid, out standard_input, out standard_output)) {
 			var input = new UnixInputStream (standard_output, true);
 			var output = new UnixOutputStream (standard_input, true);
 			var stream = new TMuxLocalStream (session_name, binary, input, output);
