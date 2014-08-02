@@ -7,5 +7,6 @@
 -T gint
 -T gpointer
 -T GSimpleAsyncResult
+-T GString
 -T gunichar
 -T size_t

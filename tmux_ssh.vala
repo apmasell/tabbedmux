@@ -40,7 +40,8 @@ internal class TabbedMux.TMuxSshStream : TMuxStream {
 			return null;
 		}
 		uint8 data[1024];
-		while (!("\n" in buffer.str)) {
+		int new_line;
+		while ((new_line = search_buffer (buffer)) < 0) {
 			/* Perform a non-blocking read using libssh2. */
 			session.blocking = false;
 			var result = channel.read (data);
@@ -102,7 +103,6 @@ internal class TabbedMux.TMuxSshStream : TMuxStream {
 			}
 		}
 		/* Take the whole line from the buffer and return it. */
-		var new_line = buffer.str.index_of_char ('\n');
 		var str = buffer.str[0 : new_line];
 		buffer.erase (0, new_line + 1);
 		return str;
@@ -229,4 +229,7 @@ internal class TabbedMux.TMuxSshStream : TMuxStream {
 		session.set_keep_alive (true, 10);
 		return new TMuxSshStream (session_name, host, port, username, binary, socket, (!)(owned) session, (!)(owned) channel);
 	}
+}
+namespace TabbedMux {
+	private static extern int search_buffer (StringBuilder buffer);
 }

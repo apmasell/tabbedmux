@@ -8,6 +8,18 @@ gchar *tabbed_mux_strip(
 	return g_strstrip(copy);
 }
 
+gint tabbed_mux_search_buffer(
+	GString *buffer) {
+	void *end;
+
+	end = memchr(buffer->str, '\n', buffer->len);
+	if (end == NULL) {
+		return -1;
+	} else {
+		return (gchar *) end - buffer->str;
+	}
+}
+
 /**
  * Continue the current asynchronous task when idle.
  *
