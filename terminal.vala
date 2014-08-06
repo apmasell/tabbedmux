@@ -1,40 +1,60 @@
 /**
  * Extend Vte to be wired to a TMuxWindow.
+ *
+ * This widget is actually a box that holds a VTE terminal, rather than
+ * extending one. It does this to facilitate proper terminal sizing. TMux will
+ * make a window only as large as the smallest client attached. If other
+ * clients are attached, the terminal might not be as big.
  */
-public class TabbedMux.Terminal : Vte.Terminal {
+public class TabbedMux.Terminal : Gtk.Box {
+	public Vte.Terminal terminal {
+		get; private set; default = new Vte.Terminal ();
+	}
 	public TMuxWindow tmux_window {
 		get; private set;
 	}
 	public Gtk.Label tab_label {
-		get; private set;
+		get; private set; default = new Gtk.Label ("New Session");
+	}
 	}
 
 	public Terminal (TMuxWindow tmux_window) {
-		tab_label = new Gtk.Label ("New Session");
+		unowned Terminal unowned_this = this;
+
 		this.tmux_window = tmux_window;
-		this.emulation = TERM_TYPE;
-		this.pointer_autohide = true;
-		this.encoding = "UTF-8";
+
+		/* Set up the VTE terminal. */
+		terminal.emulation = TERM_TYPE;
+		terminal.pointer_autohide = true;
+		terminal.encoding = "UTF-8";
+		/* Handle key and mouse presses */
+		terminal.commit.connect (unowned_this.vte_commit);
+		terminal.button_press_event.connect (unowned_this.vte_button_press_event);
 		try {
 			var regex = new GLib.Regex ("(aim|apt|apt+http|bluetooth|callto|file|finger|fish|ftps?|https?|imaps?|info|ldaps?|magnet|man|mms[tu]?|nfs|nntps?|obexftp|pop3s?|rdp|rtsp[tu]?|sftp|sieve|skype|smb|smtps?|tel|vnc|webcal|webdavs?|xmpp):([A-Za-z0-9_~:/?#@!$&'()*+,;=[\\].-]|%[0-9A-Fa-f][0-9A-Fa-f])+");
-			int id = match_add_gregex (regex, 0);
-			match_set_cursor_type (id, Gdk.CursorType.HAND2);
+			int id = terminal.match_add_gregex (regex, 0);
+			terminal.match_set_cursor_type (id, Gdk.CursorType.HAND2);
 		} catch (RegexError e) {
 			critical ("Regex error: %s", e.message);
 		}
-		unowned Terminal unowned_this = this;
+		/* Put the terminal in the box. */
+		pack_start (terminal, false, false);
+
+		/* Wire all the TMux events */
 		tmux_window.renamed.connect (unowned_this.update_tab_label);
 		tmux_window.stream.renamed.connect (unowned_this.update_tab_label);
-		tmux_window.rx_data.connect (unowned_this.feed);
+		tmux_window.rx_data.connect (terminal.feed);
 		tmux_window.size_changed.connect (unowned_this.set_size_from_tmux);
 
 		update_tab_label ();
+
+		tmux_window.pull_size ();
 	}
 
 	/**
 	 * Capture URL events and dispatch the rest to Vte.
 	 */
-	public override bool button_press_event (Gdk.EventButton event) {
+	private bool vte_button_press_event (Gdk.EventButton event) {
 		if (event.type == Gdk.EventType.BUTTON_PRESS && event.button == 1) {
 			var url = get_link ((long) event.x, (long) event.y);
 			if (url != null) {
@@ -48,7 +68,7 @@ public class TabbedMux.Terminal : Vte.Terminal {
 				return true;
 			}
 		}
-		return base.button_press_event (event);
+		return false;
 	}
 
 	public void update_tab_label () {
@@ -59,34 +79,24 @@ public class TabbedMux.Terminal : Vte.Terminal {
 	}
 
 	public void adjust_font (bool increase) {
-		var font = font_desc;
+		var font = terminal.font_desc;
 		font.set_size (font.get_size () + Pango.SCALE * (increase ? 1 : -1));
 		if (font.get_size () > Pango.SCALE) {
-			font_desc = font;
+			terminal.font_desc = font;
 		} else {
-			message ("Termintal font size (%d) too small. Not adjusting.", font.get_size ());
+			message ("Terminal font size (%d) too small. Not adjusting.", font.get_size ());
 		}
 	}
 
 	public void reset_font () {
-		font_desc = null;
+		terminal.font_desc = null;
 	}
 
 	/**
 	 * Pump Vte keyboard data to TMux.
 	 */
-	public override void commit (string text, uint size) {
+	private void vte_commit (string text, uint size) {
 		tmux_window.tx_data (text.data);
-	}
-
-	/**
-	 * When this thing gets originally laied out, the moon is waxing, and Mercury is in Ares, tell the remote TMux our size.
-	 */
-	public override bool map_event (Gdk.EventAny event) {
-		if (event.type == Gdk.EventType.MAP) {
-			resize_tmux ();
-		}
-		return false;
 	}
 
 	/**
@@ -95,22 +105,30 @@ public class TabbedMux.Terminal : Vte.Terminal {
 	public string? get_link (long x, long y) {
 		int tag;
 		unowned Gtk.Border? border;
-		style_get ("inner-border", out border);
-		var x_pos = (x - (border == null ? 0 : ((!)border).left)) / get_char_width ();
-		var y_pos = (y - (border == null ? 0 : ((!)border).top)) / get_char_height ();
-		return match_check (x_pos, y_pos, out tag);
+		terminal.style_get ("inner-border", out border);
+		var x_pos = (x - (border == null ? 0 : ((!)border).left)) / terminal.get_char_width ();
+		var y_pos = (y - (border == null ? 0 : ((!)border).top)) / terminal.get_char_height ();
+		return terminal.match_check (x_pos, y_pos, out tag);
 	}
 
 	/**
 	 * Resize the remote TMux window based on the size of the box holding the VTE session.
 	 */
 	public void resize_tmux () {
-		tmux_window.resize ((int) long.max (10, get_allocated_width () / get_char_width ()), (int) long.max (10,  get_allocated_height () / get_char_height ()));
+		unowned Gtk.Border? border;
+		terminal.style_get ("inner-border", out border);
+		long width = (get_allocated_width () - (border == null ? 0 : ((!)border).left)) / terminal.get_char_width ();
+		long height = (terminal.get_allocated_height () - (border == null ? 0 : ((!)border).top)) / terminal.get_char_height ();
+		if (width > 10 && height > 10) {
+			tmux_window.resize ((int) width, (int) height);
+		}
 	}
 
 	private void set_size_from_tmux () {
 		message ("Resizing to TMux dimension %dx%d.", tmux_window.width, tmux_window.height);
-		set_size (tmux_window.width, tmux_window.height);
+		terminal.set_size (tmux_window.width, tmux_window.height);
+		/* Yes, we are creating a positive feedback loop that we expect TMux to resolve. */
+		resize_tmux ();
 		queue_resize ();
 	}
 

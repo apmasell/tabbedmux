@@ -215,11 +215,11 @@ public class TabbedMux.Window : Gtk.ApplicationWindow {
 		window.closed.connect (unowned_this.on_tmux_window_closed);
 		var id = notebook.append_page (terminal, terminal.tab_label);
 		notebook.set_tab_reorderable (terminal, true);
-		terminal.selection_changed.connect (unowned_this.on_selection_changed);
-		unsized_children.add (terminal);
+		terminal.terminal.selection_changed.connect (unowned_this.on_selection_changed);
 		message ("Adding window from %s.", window.stream.name);
 		show_all ();
 		notebook.set_current_page (id);
+		unsized_children.add (terminal);
 	}
 
 	/**
@@ -394,7 +394,7 @@ public class TabbedMux.Window : Gtk.ApplicationWindow {
 	private void on_copy () {
 		var widget = notebook.get_nth_page (notebook.page) as Terminal;
 		if (widget != null) {
-			((!)widget).copy_clipboard ();
+			((!)widget).terminal.copy_clipboard ();
 		}
 	}
 
@@ -411,7 +411,7 @@ public class TabbedMux.Window : Gtk.ApplicationWindow {
 	private void on_paste () {
 		var widget = notebook.get_nth_page (notebook.page) as Terminal;
 		if (widget != null) {
-			((!)widget).paste_clipboard ();
+			((!)widget).terminal.paste_clipboard ();
 		}
 	}
 
@@ -456,7 +456,7 @@ public class TabbedMux.Window : Gtk.ApplicationWindow {
 				((!)terminal).resize_tmux ();
 				unsized_children.remove ((!)terminal);
 			}
-			copy_item.sensitive = ((!)terminal).get_has_selection ();
+			copy_item.sensitive = ((!)terminal).terminal.get_has_selection ();
 			var stream = ((!)terminal).tmux_window.stream;
 			for (var it = 0; it < notebook.get_n_pages (); it++) {
 				var other_terminal = notebook.get_nth_page (it) as Terminal;
@@ -485,16 +485,14 @@ public class TabbedMux.Window : Gtk.ApplicationWindow {
 	 */
 	public override bool configure_event (Gdk.EventConfigure event) {
 		var result = base.configure_event (event);
-		if (event.type == Gdk.EventType.CONFIGURE) {
-			for (var it = 0; it < notebook.get_n_pages (); it++) {
-				var terminal = notebook.get_nth_page (it) as Terminal;
-				if (terminal != null) {
-					if (it == notebook.page) {
-						((!)terminal).resize_tmux ();
-						unsized_children.remove ((!)terminal);
-					} else {
-						unsized_children.add ((!)terminal);
-					}
+		for (var it = 0; it < notebook.get_n_pages (); it++) {
+			var terminal = notebook.get_nth_page (it) as Terminal;
+			if (terminal != null) {
+				if (it == notebook.page) {
+					((!)terminal).resize_tmux ();
+					unsized_children.remove ((!)terminal);
+				} else {
+					unsized_children.add ((!)terminal);
 				}
 			}
 		}

@@ -9,7 +9,8 @@ namespace TabbedMux {
 		NONE,
 		CAPTURE,
 		SESSION_ID,
-		WINDOWS
+		WINDOWS,
+		WINDOW_SIZE
 	}
 
 	/**
@@ -228,8 +229,6 @@ namespace TabbedMux {
 								  message ("%s:%s: Received pane information. %s", name, session_name, (!)output_line);
 								  var info_decoder = Decoder ((!)(owned) output_line, false, ':');
 								  var id = info_decoder.pop_id ();
-								  var width = info_decoder.pop_id ();
-								  var height = info_decoder.pop_id ();
 								  var title = info_decoder.get_remainder ();
 								  TMuxWindow window;
 								  if (windows.has_key (id)) {
@@ -241,12 +240,23 @@ namespace TabbedMux {
 									  window_created (window);
 									  window.refresh ();
 								  }
-								  message ("%s:%s: Got %d %d for @%d. Title is: %s", name, session_name, width, height, id, title);
+								  message ("%s:%s: Got @%d. Title is: %s", name, session_name, id, title);
 								  if (window.title != title) {
 									  window.title = title;
 									  window.renamed ();
 								  }
-								  window.set_size (width, height);
+								  break;
+
+							  case NextOutput.WINDOW_SIZE:
+								  message ("%s:%s: Received pane information. %s", name, session_name, (!)output_line);
+								  var info_decoder = Decoder ((!)(owned) output_line, false, ':');
+								  var id = info_decoder.pop_id ();
+								  var width = info_decoder.pop_id ();
+								  var height = info_decoder.pop_id ();
+								  if (windows.has_key (id)) {
+									  var window = windows[id];
+									  window.set_size (width, height);
+								  }
 								  break;
 
 							  case NextOutput.NONE:
@@ -303,7 +313,7 @@ namespace TabbedMux {
 					  */
 					 case "%session-changed":
 					 case "%window-add":
-						 exec (@"list-windows -t $(Shell.quote(session_name)) -F \"#{window_id}:#{window_width}:#{window_height}:#{window_name}\"", NextOutput.WINDOWS);
+						 exec (@"list-windows -t $(Shell.quote(session_name)) -F \"#{window_id}:#{window_name}\"", NextOutput.WINDOWS);
 						 break;
 
 					 /*
@@ -466,6 +476,17 @@ namespace TabbedMux {
 				stream.exec (@"paste-buffer -p -b $(buffer) -t @$(id)");
 			} catch (IOError e) {
 				critical ("%s:%s:%d: Paste buffer failed: %s", stream.name, stream.session_name, id, e.message);
+			}
+		}
+
+		/**
+		 * Get window size from TMux.
+		 */
+		public void pull_size () {
+			try {
+				stream.exec (@"list-windows -t $(Shell.quote(stream.session_name)) -F \"#{window_id}:#{window_width}:#{window_height}\"", NextOutput.WINDOW_SIZE);
+			} catch (IOError e) {
+				critical ("%s:%s:%d: Pull size failed: %s", stream.name, stream.session_name, id, e.message);
 			}
 		}
 
