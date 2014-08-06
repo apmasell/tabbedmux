@@ -18,6 +18,9 @@ public class TabbedMux.MenuItem : Gtk.MenuItem {
 	}
 }
 
+/**
+ * Smart menu item to create a new TMux window.
+ */
 public class TabbedMux.NewMenuItem : MenuItem {
 	public NewMenuItem (TMuxStream stream) {
 		base (stream);
@@ -28,6 +31,9 @@ public class TabbedMux.NewMenuItem : MenuItem {
 	}
 }
 
+/**
+ * Smart menu item to disconnect from a TMux session.
+ */
 public class TabbedMux.DisconnectMenuItem : MenuItem {
 	public DisconnectMenuItem (TMuxStream stream) {
 		base (stream);
@@ -67,18 +73,22 @@ public class TabbedMux.Window : Gtk.ApplicationWindow {
 
 	internal Window (Application app) {
 		Object (application: app, title: "TabbedMux", show_menubar: true, icon_name: "utilities-terminal");
+		/* Allow receiving detailed resize information. */
 		add_events (Gdk.EventMask.STRUCTURE_MASK | Gdk.EventMask.SUBSTRUCTURE_MASK);
 		this.set_default_size (600, 400);
 		if (app is Application) {
+			/* Make menus and tabs for the open streams. */
 			foreach (var stream in ((Application) app).streams) {
 				add_new_stream (stream);
 			}
+			/* Populate a menu for saved sessions. */
 			var saved_sessions = ((Application) app).saved_sessions;
 			saved_sessions.changed.connect (this.on_saved_changed);
 			on_saved_changed (saved_sessions);
 
 			unowned Window unowned_this = this;
 
+			/* Notebook new window button. */
 			var add = new Gtk.Button ();
 			add.tooltip_text = "New terminal";
 			add.relief = Gtk.ReliefStyle.NONE;
@@ -87,6 +97,7 @@ public class TabbedMux.Window : Gtk.ApplicationWindow {
 			notebook.set_action_widget (add, Gtk.PackType.START);
 			add.clicked.connect (unowned_this.create_session);
 
+			/* Notebook close window button. */
 			var close = new Gtk.Button ();
 			close.tooltip_text = "Close terminal";
 			close.relief = Gtk.ReliefStyle.NONE;
@@ -97,6 +108,9 @@ public class TabbedMux.Window : Gtk.ApplicationWindow {
 		}
 	}
 
+	/**
+	 * Check if the TMux session is currently connected.
+	 */
 	private bool is_stream_active (SessionItem item) {
 		if (!(application is Application)) {
 			return false;
@@ -108,6 +122,9 @@ public class TabbedMux.Window : Gtk.ApplicationWindow {
 		}
 		return false;
 	}
+	/**
+	 * Repopulate the menu of saved sessions.
+	 */
 	private void on_saved_changed (SavedSessions sender) {
 		var non_empty = false;
 		foreach (var child in saved_menu.get_children ()) {
@@ -144,6 +161,9 @@ public class TabbedMux.Window : Gtk.ApplicationWindow {
 		open_dialog.destroy ();
 	}
 
+	/**
+	 * Create all the menu items for a newly-connected TMux stream.
+	 */
 	internal void add_new_stream (TMuxStream stream) {
 		var new_item = new NewMenuItem (stream);
 		new_menu.append (new_item);
@@ -156,12 +176,18 @@ public class TabbedMux.Window : Gtk.ApplicationWindow {
 		}
 	}
 
+	/**
+	 * Remove all matching smart menu items from a menu.
+	 */
 	private static void menu_remove (Gtk.Widget widget, Gtk.Menu parent, TMuxStream stream) {
 		if (widget is MenuItem && ((MenuItem) widget).stream == stream) {
 			parent.remove (widget);
 		}
 	}
 
+	/**
+	 * Clean up all the menu items for a dead TMux stream.
+	 */
 	internal void on_connection_closed (TMuxStream stream, string reason) {
 		new_menu.@foreach ((widget) => menu_remove (widget, new_menu, stream));
 		disconnect_menu.@foreach ((widget) => menu_remove (widget, disconnect_menu, stream));
@@ -179,10 +205,13 @@ public class TabbedMux.Window : Gtk.ApplicationWindow {
 		}
 	}
 
+	/**
+	 * Make a tab for a new TMux window.
+	 */
 	internal void add_window (TMuxWindow window) {
 		var terminal = new Terminal (window);
 		unowned Window unowned_this = this;
-		// TODO disconnect on close
+		// TODO disconnect stream on close of last tab?
 		window.closed.connect (unowned_this.on_tmux_window_closed);
 		var id = notebook.append_page (terminal, terminal.tab_label);
 		notebook.set_tab_reorderable (terminal, true);

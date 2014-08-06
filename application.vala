@@ -1,3 +1,6 @@
+/**
+ * Gtk Application framework implementation
+ */
 public class TabbedMux.Application : Gtk.Application {
 	internal Gee.Set<TMuxStream> streams = new Gee.HashSet<TMuxStream> ();
 	internal SavedSessions saved_sessions;

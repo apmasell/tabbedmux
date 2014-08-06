@@ -2,12 +2,18 @@
 #include <gio/gio.h>
 #include <string.h>
 
+/**
+ * Const-safe wrapper around g_strstrip.
+ */
 gchar *tabbed_mux_strip(
 	const gchar *input) {
 	gchar *copy = g_strdup(input);
 	return g_strstrip(copy);
 }
 
+/**
+ * Find the offset of the first newline in a GString.
+ */
 gint tabbed_mux_search_buffer(
 	GString *buffer) {
 	void *end;

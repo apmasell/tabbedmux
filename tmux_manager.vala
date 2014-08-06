@@ -159,6 +159,7 @@ namespace TabbedMux {
 		private async string process_io () {
 			while (true) {
 				try {
+					/* Read a line from TMux and shove it into a decoder. */
 					var str = yield read_line_async (cancellable);
 					if (str == null) {
 						message ("%s:%s: End of stream.", name, session_name);
@@ -182,6 +183,7 @@ namespace TabbedMux {
 							 window_id = todo.id;
 						 }
 						 if (action == NextOutput.CAPTURE && windows.has_key (window_id)) {
+							 /* Before we capture the pane, clear the screen. */
 							 windows[window_id].rx_data ("\033[2J".data);
 						 }
 						 string? output_line;
@@ -381,6 +383,7 @@ namespace TabbedMux {
 				process_io.begin ((sender, result) => connection_closed (process_io.end (result)));
 				started = true;
 				try {
+					/* Our first command is to figure out what our own session ID is, since TMux uses a numeric one instead of text. */
 					exec ("display-message -p '#S'", NextOutput.SESSION_ID);
 				} catch (Error e) {
 					message ("%s:%s: %s", name, session_name, e.message);
@@ -402,12 +405,22 @@ namespace TabbedMux {
 		public unowned TMuxStream stream {
 			get; private set;
 		}
+		/**
+		 * Width of the terminal, in characters.
+		 */
 		public int width {
 			get; private set;
 		}
+		/**
+		 * Height of the terminal, in characters.
+		 */
 		public int height {
 			get; private set;
 		}
+		/**
+		 * The terminal's session title, as set by your fancy prompt in the remote
+		 * shell or renaming it in TMux.
+		 */
 		public string title {
 			get; internal set; default = "unknown";
 		}
@@ -494,7 +507,11 @@ namespace TabbedMux {
 			}
 		}
 
+		/**
+		 * Change the size of the terminal.
+		 */
 		internal void set_size (int width, int height) {
+			/* Don't do this if it hasn't changed. We get this event a lot from TMux because we listed the windows, but there might be no change. */
 			if (width != this.width || height != this.height) {
 				var old_width = width;
 				var old_height = height;

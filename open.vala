@@ -28,7 +28,7 @@ public class TabbedMux.OpenDialog : Gtk.Dialog {
 	}
 
 	/**
-	 * If the user start typying in an SSH-only box, flip the connection type.
+	 * If the user start typing in an SSH-only box, flip the connection type.
 	 */
 	[GtkCallback]
 	private void on_ssh_changed () {
@@ -45,6 +45,7 @@ public class TabbedMux.OpenDialog : Gtk.Dialog {
 		try {
 			TMuxStream? stream;
 
+			/* Validate fields common to SSH and local. */
 			var session_name = strip (session.text);
 			if (":" in session_name) {
 				show_error (this, "Session names may not contain colons.");
@@ -60,6 +61,7 @@ public class TabbedMux.OpenDialog : Gtk.Dialog {
 			}
 
 			if (remote_connection.active) {
+				/* SSH. Validate all the fields. */
 				var hostname = strip (host.text);
 				if (hostname.length == 0) {
 					show_error (this, "Host is missing.");
@@ -83,19 +85,25 @@ public class TabbedMux.OpenDialog : Gtk.Dialog {
 					username = Environment.get_user_name ();
 				}
 
+				/* Save if desired */
 				if (save.active && application is Application) {
 					((Application) application).saved_sessions.append_ssh (session_name, host.text, (uint16) port_number, username, tmux_binary);
 				}
 
+				/* Create a handler for the password/prompts. */
 				var keybd_dialog = new KeyboardInteractiveDialog (this, host.text);
 				stream = TMuxSshStream.open (session_name, host.text, (uint16) port_number, username, tmux_binary, keybd_dialog.respond);
 			} else {
+				/* Local. Don't validate SSH fields. */
+
+				/* Save if desired */
 				if (save.active && application is Application) {
 					((Application) application).saved_sessions.append_local (session_name, tmux_binary);
 				}
 
 				stream = TMuxLocalStream.open (session_name, tmux_binary);
 			}
+			/* Deal with the connection attempt. */
 			if (stream == null) {
 				show_error (this, "Could not connect.");
 			} else {

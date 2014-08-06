@@ -34,6 +34,9 @@ internal class TabbedMux.TMuxSshStream : TMuxStream {
 		session = null;
 	}
 
+	/**
+	 * Read from the remote TMux instance via a non-blocking libssh2 socket.
+	 */
 	protected override async string? read_line_async (Cancellable cancellable) throws Error {
 		/* If we've been told to stop, stop. */
 		if (cancellable.is_cancelled ()) {
@@ -41,6 +44,7 @@ internal class TabbedMux.TMuxSshStream : TMuxStream {
 		}
 		uint8 data[1024];
 		int new_line;
+		/* Read and append to a StringBuilder until we have a line. */
 		while ((new_line = search_buffer (buffer)) < 0) {
 			/* Perform a non-blocking read using libssh2. */
 			session.blocking = false;
@@ -49,9 +53,9 @@ internal class TabbedMux.TMuxSshStream : TMuxStream {
 				/* Stuff any data into our buffer. */
 				buffer.append_len ((string) data, result);
 			} else if ((SSH2.Error)result == SSH2.Error.AGAIN || result == 0 && channel.eof () != 1) {
-				/*
-				 * Perform an obligatory keep-alive.
-				 */
+				/* There is no data currently, so wait for the main loop to re-invoke us.
+
+				   /* Perform an obligatory SSH keep-alive.  */
 				int seconds_to_next;
 				if (session.send_keep_alive (out seconds_to_next) < 0) {
 					char[] error_message;
@@ -73,6 +77,7 @@ internal class TabbedMux.TMuxSshStream : TMuxStream {
 				source = socket.create_source (IOCondition.IN, cancellable);
 				((!)source).set_callback ((socket, condition) => { async_continue (); return false; });
 				if (seconds_to_next > 0) {
+					/* If we should send a keep alive, add a timer. */
 					var timeout = new TimeoutSource.seconds (seconds_to_next);
 					timeout.set_callback (() => false);
 					((!)source).add_child_source (timeout);
@@ -85,10 +90,11 @@ internal class TabbedMux.TMuxSshStream : TMuxStream {
 					return null;
 				}
 			} else if ((SSH2.Error)result == SSH2.Error.SOCKET_RECV) {
+				/* Some error in the underlying socket. */
 				critical ("%s:%s: %s", name, session_name, strerror (errno));
 				return null;
 			} else if (result < 0) {
-				/* If it's a real error, complain. */
+				/* Some other SSH error to complain about. */
 				char[] error_message;
 				session.get_last_error (out error_message);
 				critical ("%s:%s: %zd %s", name, session_name, result, (string) error_message);
@@ -97,6 +103,7 @@ internal class TabbedMux.TMuxSshStream : TMuxStream {
 				}
 				return null;
 			} else if (channel.eof () == 1) {
+				/* The channel is dead, probably because the remote process exited. */
 				return null;
 			} else {
 				assert_not_reached ();
@@ -147,6 +154,9 @@ internal class TabbedMux.TMuxSshStream : TMuxStream {
 	private static extern SSH2.Error password_adapter (SSH2.Session session, string username, InteractiveAuthentication handler);
 	private static extern SSH2.Error password_simple (SSH2.Session session, string username, InteractiveAuthentication handler);
 
+	/**
+	 * Attempt to open an SSH connection and talk to TMux on that host.
+	 */
 	public static TMuxStream? open (string session_name, string host, uint16 port, string username, string binary, InteractiveAuthentication? get_password) throws Error {
 		var session = SSH2.Session.create<bool> ();
 

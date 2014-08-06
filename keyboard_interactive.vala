@@ -15,6 +15,7 @@ public class KeyboardInteractiveDialog : Gtk.Dialog {
 		var grid = new Gtk.Grid ();
 		box.add (grid);
 		grid.attach (new Gtk.Label (instruction), 0, 0, 2, 1);
+		/* SSH provides a list of prompts, so prepare a grid of text boxes. */
 		for (var it = 0; it < prompts.length; it++) {
 			grid.attach (new Gtk.Label ((string) prompts[it].text), 0, it + 1, 1, 1);
 			var entry = new Gtk.Entry ();

@@ -27,6 +27,7 @@ public class TabbedMux.Terminal : Vte.Terminal {
 		tmux_window.stream.renamed.connect (unowned_this.update_tab_label);
 		tmux_window.rx_data.connect (unowned_this.feed);
 		tmux_window.size_changed.connect (unowned_this.set_size_from_tmux);
+
 		update_tab_label ();
 	}
 
@@ -88,6 +89,9 @@ public class TabbedMux.Terminal : Vte.Terminal {
 		return false;
 	}
 
+	/**
+	 * Translate a mouse position in the VTE terminal to row and column, then get the URL in there.
+	 */
 	public string? get_link (long x, long y) {
 		int tag;
 		unowned Gtk.Border? border;
@@ -97,6 +101,9 @@ public class TabbedMux.Terminal : Vte.Terminal {
 		return match_check (x_pos, y_pos, out tag);
 	}
 
+	/**
+	 * Resize the remote TMux window based on the size of the box holding the VTE session.
+	 */
 	public void resize_tmux () {
 		tmux_window.resize ((int) long.max (10, get_allocated_width () / get_char_width ()), (int) long.max (10,  get_allocated_height () / get_char_height ()));
 	}
@@ -107,6 +114,9 @@ public class TabbedMux.Terminal : Vte.Terminal {
 		queue_resize ();
 	}
 
+	/**
+	 * Change the tab label if a window from the same TMux session is selected.
+	 */
 	public void sibling_selected (bool selected) {
 		if (selected) {
 			var description = new Pango.FontDescription ();

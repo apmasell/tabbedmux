@@ -9,7 +9,7 @@ GNU Screen and TMux have become part of most users' work flow when using SSH to 
 
 TabbedMux connects to remote systems using SSH, starts TMux, and creates one tab in a GUI window for each TMux window that exists in the remote system. All the tabs from all the systems are promoted to a single layer (i.e., no nesting).
 
-Note: window means two different things to GTK+ and TMux. It's confusing. Sorry.
+Note: window means two different things to Gtk+ and TMux. It's confusing. Sorry.
 
 INSTALLATION
 ------------
@@ -23,7 +23,7 @@ For Ubuntu 14.04 or later:
 For everyone else:
 
   1. Install the Vala compiler 0.22 or later.
-  2. Install development headers for GTK+ 3.10, Gee 0.8, Vte 2.90, libnotify, and libssh2 1.4, or newer versions.
+  2. Install development headers for Gtk+ 3.10, Gee 0.8, Vte 2.90, libnotify, and libssh2 1.4, or newer versions.
   3. `make && sudo make install`
   4. Install tmux 1.8 or later on the local system and any remote systems you wish to access.
 
@@ -32,6 +32,19 @@ BUGS
 
 The TMux library has an issue that can cause multiple sessions to blend together. Since most users don't use this feature, it's not a big deal. It's fixed after 1.9. http://sourceforge.net/p/tmux/tickets/94/
 
-Occasionally, stuff comes back from no apparent session and TabbedMux will create a dead tab.
+TMux's model makes it rather difficult to have multiple Gtk+ windows because of the way resizing works. For now, everything is stuck in a single window.
 
-TMux's model makes it rather difficult to have multiple GTK+ windows because of the way resizing works. For now, everything is stuck in a single window.
+OVERVIEW
+--------
+
+The program is pretty small and it does so by making heavy use of GLib and Gtk+ convenience systems, which are not obvious if you haven't worked with them. The program can be divided into two halves: the GUI and the TMux handler.
+
+There is a single `GLib.MainLoop` that schedules events between the GUI and the TMux handler. Since they share a single thread, neither is permitted to block. As a convenience, there is no concurrency. The glue that binds the two is GLib's signal mechanism: GUI components bind to signals in the TMux code, which triggers them when it receives appropriate data from the remote end.
+
+The TMux handler consists of a `Stream`, which communicates with a TMux instance to scrape appropriate information. Some commands, like creating a window are issued to the stream. The stream also creates `TMuxWindow` objects, which are handles on each of the windows in the TMux session. GUI components are generally associated with a single window. There are some commands that can be issued directly to windows, including killing the window. A `Stream` need to be able to communicate with a TMux process. Since writes are generally short and buffered, the implementation assumes that writes can be done synchronously and will not block. Reading is another story; since reads will almost certainly block, the reading is done using Vala's `async` method support, which uses GIO's asynchronous co-routine system. There are two implementations of this class: one for communicating with a local TMux instance and one for communicating with a TMux instance over SSH using libssh2. The local stream simply spawns a task and uses GIO's asynchronous file streams to communicate with it. SSH is more complicated.
+
+libssh2 can work on top of a non-blocking socket. The class then create a GIO wrapper around a socket, on which it can asynchronously wait, and then calls into libssh2 when data is available and passes it to the base implementation for processing. There also needs to be interaction between libssh2's authentication mechanism and Gtk+ to show password entry dialogs. This glue code is extremely ugly.
+
+Inside the GUI, there are three components: the application, the window, and the terminal. The application is a Gtk+ framework for initialising applications. It has support for handling multiple windows that goes dreadfully unused. The application has a collection of all the active streams. The window creates various menus for all the streams that it knows about and creates terminals (tabs) when new TMux windows become available. Each terminal glue the output from TMux to a VTE terminal and sends the keystrokes back to TMux. The resizing is...complicated, since both Gtk+ and TMux have final authority on the size of the terminal, yet have to agree.
+
+Vala and Gtk+ support “templates” which allow the GUI to be designed using Glade and then bound in compiled into Vala. Methods marked as `[GtkCallback]` in Vala are activated by some component in the GUI specified in the matching `.ui` file. There are also a number of dialog boxes, which are simpler.

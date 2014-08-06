@@ -1,6 +1,9 @@
 #include <string.h>
 #include "tmux_decode.h"
 
+/**
+ * Initialise a TMux response decoder.
+ */
 void tabbed_mux_decoder_init(
 	struct tabbed_mux_decoder *self,
 	gchar *str,
@@ -24,6 +27,9 @@ void tabbed_mux_decoder_destroy(
 	g_free(self->str);
 }
 
+/**
+ * Discard the current field in the buffer.
+ */
 void tabbed_mux_decoder_pop(
 	struct tabbed_mux_decoder *self) {
 	if (self->rest == NULL) {
@@ -35,6 +41,9 @@ void tabbed_mux_decoder_pop(
 	}
 }
 
+/**
+ * Parse the current field as a window or session ID.
+ */
 gint tabbed_mux_decoder_pop_id(
 	struct tabbed_mux_decoder *self) {
 	gchar *end;
@@ -54,11 +63,17 @@ gint tabbed_mux_decoder_pop_id(
 	return result;
 }
 
+/**
+ * Parse the first field, which is the command.
+ */
 gchar *tabbed_mux_decoder_get_command(
 	struct tabbed_mux_decoder *self) {
 	return self->str;
 }
 
+/**
+ * Get the unparsed portion of the line, unescaping all the octal sequences.
+ */
 gchar *tabbed_mux_decoder_get_remainder(
 	struct tabbed_mux_decoder *self) {
 	const gchar *num_start;
