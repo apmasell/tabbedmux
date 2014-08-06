@@ -16,8 +16,33 @@ public class TabbedMux.Terminal : Gtk.Box {
 	public Gtk.Label tab_label {
 		get; private set; default = new Gtk.Label ("New Session");
 	}
+	public static Regex? uri_regex;
+	private const string X_SCHEME_HANDLER = "x-scheme-handler/";
+	class construct {
+		var buffer = new StringBuilder ();
+		buffer.append ("(");
+		var first = true;
+		foreach (var info in AppInfo.get_all ()) {
+			foreach (var type in info.get_supported_types ()) {
+				if (!type.has_prefix (X_SCHEME_HANDLER)) {
+					continue;
+				}
+				if (first) {
+					first = false;
+				} else {
+					buffer.append_c ('|');
+				}
+				buffer.append (type.offset (X_SCHEME_HANDLER.length));
+			}
+		}
+		buffer.append ("):([A-Za-z0-9_~:/?#@!$&'()*+,;=[\\].-]|%[0-9A-Fa-f][0-9A-Fa-f])+");
+		message ("URL regex: %s", buffer.str);
+		try {
+			uri_regex = new Regex (buffer.str);
+		} catch (RegexError e) {
+			critical ("Regex error: %s", e.message);
+		}
 	}
-
 	public Terminal (TMuxWindow tmux_window) {
 		unowned Terminal unowned_this = this;
 
@@ -30,13 +55,10 @@ public class TabbedMux.Terminal : Gtk.Box {
 		/* Handle key and mouse presses */
 		terminal.commit.connect (unowned_this.vte_commit);
 		terminal.button_press_event.connect (unowned_this.vte_button_press_event);
-		try {
-			var regex = new GLib.Regex ("(aim|apt|apt+http|bluetooth|callto|file|finger|fish|ftps?|https?|imaps?|info|ldaps?|magnet|man|mms[tu]?|nfs|nntps?|obexftp|pop3s?|rdp|rtsp[tu]?|sftp|sieve|skype|smb|smtps?|tel|vnc|webcal|webdavs?|xmpp):([A-Za-z0-9_~:/?#@!$&'()*+,;=[\\].-]|%[0-9A-Fa-f][0-9A-Fa-f])+");
-			int id = terminal.match_add_gregex (regex, 0);
-			terminal.match_set_cursor_type (id, Gdk.CursorType.HAND2);
-		} catch (RegexError e) {
-			critical ("Regex error: %s", e.message);
-		}
+
+		int id = terminal.match_add_gregex (uri_regex, 0);
+		terminal.match_set_cursor_type (id, Gdk.CursorType.HAND2);
+
 		/* Put the terminal in the box. */
 		pack_start (terminal, false, false);
 
