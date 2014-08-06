@@ -1,3 +1,13 @@
+tabbedmux (1.5~ppa0) trusty; urgency=medium
+
+  * Only add URL handlers for supported schemes
+  * Try to fix resizing problem
+  * Fix the hung SSH session problem
+  * Added keep alive support for SSH
+  * Copy environment variables to local tmux
+
+ -- Andre Masella <andre@masella.name>  Tue, 05 Aug 2014 20:45:47 -0400
+
 tabbedmux (1.4~ppa0) trusty; urgency=medium
 
   * Break send-keys into short blocks (avoids problem in tmux 1.8)
