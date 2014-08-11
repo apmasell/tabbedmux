@@ -85,23 +85,23 @@ public class TabbedMux.OpenDialog : Gtk.Dialog {
 					username = Environment.get_user_name ();
 				}
 
-				/* Save if desired */
-				if (save.active && application is Application) {
-					((Application) application).saved_sessions.append_ssh (session_name, host.text, (uint16) port_number, username, tmux_binary);
-				}
-
 				/* Create a handler for the password/prompts. */
 				var keybd_dialog = new KeyboardInteractiveDialog (this, host.text);
 				stream = TMuxSshStream.open (session_name, host.text, (uint16) port_number, username, tmux_binary, keybd_dialog.respond);
+
+				/* Save if desired */
+				if (stream != null && save.active && application is Application) {
+					((Application) application).saved_sessions.append_ssh (session_name, host.text, (uint16) port_number, username, tmux_binary);
+				}
 			} else {
 				/* Local. Don't validate SSH fields. */
 
+				stream = TMuxLocalStream.open (session_name, tmux_binary);
+
 				/* Save if desired */
-				if (save.active && application is Application) {
+				if (stream != null && save.active && application is Application) {
 					((Application) application).saved_sessions.append_local (session_name, tmux_binary);
 				}
-
-				stream = TMuxLocalStream.open (session_name, tmux_binary);
 			}
 			/* Deal with the connection attempt. */
 			if (stream == null) {
