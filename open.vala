@@ -108,10 +108,10 @@ public class TabbedMux.OpenDialog : Gtk.Dialog {
 				show_error (this, "Could not connect.");
 			} else {
 				((Application) application).add_stream ((!)stream);
+				destroy ();
 			}
 		} catch (Error e) {
 			show_error (this, e.message);
 		}
-		destroy ();
 	}
 }
