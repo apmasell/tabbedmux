@@ -3,6 +3,7 @@
  */
 [GtkTemplate (ui = "/name/masella/tabbedmux/open.ui")]
 public class TabbedMux.OpenDialog : Gtk.Dialog {
+	public bool success = false;
 	[GtkChild]
 	private Gtk.RadioButton remote_connection;
 	[GtkChild]
@@ -108,7 +109,7 @@ public class TabbedMux.OpenDialog : Gtk.Dialog {
 				show_error (this, "Could not connect.");
 			} else {
 				((Application) application).add_stream ((!)stream);
-				destroy ();
+				success = true;
 			}
 		} catch (Error e) {
 			show_error (this, e.message);

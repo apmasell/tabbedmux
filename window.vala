@@ -157,7 +157,7 @@ public class TabbedMux.Window : Gtk.ApplicationWindow {
 	[GtkCallback]
 	private void add_stream () {
 		var open_dialog = new OpenDialog (this);
-		open_dialog.run ();
+		while (open_dialog.run () == 0 && !open_dialog.success) {}
 		open_dialog.destroy ();
 	}
 
