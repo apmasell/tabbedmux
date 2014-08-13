@@ -80,7 +80,9 @@ gchar *tabbed_mux_decoder_get_remainder(
 	gchar *dest;
 	gchar *p = self->rest;
 	gchar *q;
+	gchar *save = NULL;
 	gint it;
+	gboolean check = FALSE;
 
 	if (self->rest == NULL) {
 		return NULL;
@@ -117,12 +119,23 @@ gchar *tabbed_mux_decoder_get_remainder(
 				} else {
 					q++;
 				}
+				if (check && q[-1] == 'k') {
+					save = q - 2;
+				}
+				check = q[-1] == '\033';
+				if (check && save != NULL) {
+					q = save;
+					save = NULL;
+				}
 				break;
 			default:
 				g_warning("unrecognised escape sequence: %c", *p);
 			}
 		} else {
 			*q++ = *p++;
+			if (check && q[-1] == 'k') {
+				save = q - 2;
+			}
 		}
 	}
 	*q = '\0';
