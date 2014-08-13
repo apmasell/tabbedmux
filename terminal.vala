@@ -52,9 +52,14 @@ public class TabbedMux.Terminal : Gtk.Box {
 		terminal.emulation = TERM_TYPE;
 		terminal.pointer_autohide = true;
 		terminal.encoding = "UTF-8";
+		var list = new Gtk.TargetList ({});
+		list.add_text_targets (0);
+		list.add_uri_targets (1);
+		Gtk.drag_dest_set (terminal, Gtk.DestDefaults.ALL, Gtk.target_table_new_from_list (list), Gdk.DragAction.COPY | Gdk.DragAction.MOVE);
 		/* Handle key and mouse presses */
 		terminal.commit.connect (unowned_this.vte_commit);
 		terminal.button_press_event.connect (unowned_this.vte_button_press_event);
+		terminal.drag_data_received.connect (unowned_this.vte_drag);
 
 		int id = terminal.match_add_gregex (uri_regex, 0);
 		terminal.match_set_cursor_type (id, Gdk.CursorType.HAND2);
@@ -91,6 +96,28 @@ public class TabbedMux.Terminal : Gtk.Box {
 			}
 		}
 		return false;
+	}
+
+	private void vte_drag (Gtk.Widget widget,
+			       Gdk.DragContext context,
+			       int x,
+			       int y,
+			       Gtk.SelectionData selection_data,
+			       uint info,
+			       uint timestamp) {
+		if (info == 1) {
+			var first = true;
+			foreach (var uri in selection_data.get_uris ()) {
+				if (first) {
+					first = false;
+				} else {
+					tmux_window.tx_data (" ".data);
+				}
+				tmux_window.tx_data (Shell.quote (uri).data);
+			}
+		} else {
+			tmux_window.tx_data (selection_data.get_text ().data);
+		}
 	}
 
 	public void update_tab_label () {
