@@ -200,7 +200,7 @@ public class TabbedMux.Window : Gtk.ApplicationWindow {
 	 * Only have the Edit → Copy menu active if the selection is in the current tab.
 	 */
 	private void on_selection_changed (Vte.Terminal terminal) {
-		if (notebook.get_nth_page (notebook.page) == terminal) {
+		if (((Terminal) notebook.get_nth_page (notebook.page)).terminal == terminal) {
 			copy_item.sensitive = terminal.get_has_selection ();
 		}
 	}
