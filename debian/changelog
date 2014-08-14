@@ -1,3 +1,9 @@
+tabbedmux (1.6~ppa1) trusty; urgency=medium
+
+  * Fix corruption of escape sequences
+
+ -- Andre Masella <andre@masella.name>  Thu, 14 Aug 2014 09:57:11 -0400
+
 tabbedmux (1.6~ppa0) trusty; urgency=medium
 
   * Filter out screen window title escape sequence
