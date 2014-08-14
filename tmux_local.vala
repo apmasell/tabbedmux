@@ -39,7 +39,7 @@ public class TabbedMux.TMuxLocalStream : TMuxStream {
 			}
 		}
 		/* Spawn, grabbing hold of stdin and stdout. */
-		if (Process.spawn_async_with_pipes (null, { binary, "-C", "new", "-A", "-s", session_name }, environment, SpawnFlags.SEARCH_PATH, null, out child_pid, out standard_input, out standard_output)) {
+		if (Process.spawn_async_with_pipes (null, { binary, "-u", "-C", "new", "-A", "-s", session_name }, environment, SpawnFlags.SEARCH_PATH, null, out child_pid, out standard_input, out standard_output)) {
 			/* Write stdin and stdout to GLib streams. */
 			var input = new UnixInputStream (standard_output, true);
 			var output = new UnixOutputStream (standard_input, true);

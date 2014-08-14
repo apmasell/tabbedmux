@@ -225,7 +225,7 @@ internal class TabbedMux.TMuxSshStream : TMuxStream {
 			session.get_last_error (out error_message);
 			throw new IOError.INVALID_DATA ((string) error_message);
 		}
-		var command = @"TERM=$(TERM_TYPE) $(Shell.quote (binary)) -C new -A -s $(Shell.quote (session_name))";
+		var command = @"TERM=$(TERM_TYPE) $(Shell.quote (binary)) -u -C new -A -s $(Shell.quote (session_name))";
 		message ("%s@%s:%d:%s: executing %s", username, host, port, session_name, command);
 		if (((!)channel).start_command (command) != SSH2.Error.NONE) {
 			char[] error_message;
