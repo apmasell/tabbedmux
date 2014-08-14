@@ -1,3 +1,12 @@
+tabbedmux (1.6~ppa0) trusty; urgency=medium
+
+  * Filter out screen window title escape sequence
+  * Receive drop events
+  * Fix regression in copy sensitivity
+  * Redisplay the open dialog if the connect failed
+
+ -- Andre Masella <andre@masella.name>  Wed, 13 Aug 2014 20:10:29 -0400
+
 tabbedmux (1.5~ppa0) trusty; urgency=medium
 
   * Only add URL handlers for supported schemes
