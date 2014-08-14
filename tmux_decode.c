@@ -136,6 +136,7 @@ gchar *tabbed_mux_decoder_get_remainder(
 			if (check && q[-1] == 'k') {
 				save = q - 2;
 			}
+			check = FALSE;
 		}
 	}
 	*q = '\0';
