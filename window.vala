@@ -66,6 +66,9 @@ public class TabbedMux.Window : Gtk.ApplicationWindow {
 	[GtkChild]
 	private Gtk.MenuItem remove_saved_item;
 
+	private Settings settings;
+	private uint configure_id;
+
 	/**
 	 * These are the tabs that haven't been resized. We try to resize lazily since resizing can mangle the information in the remote session.
 	 */
@@ -75,7 +78,23 @@ public class TabbedMux.Window : Gtk.ApplicationWindow {
 		Object (application: app, title: "TabbedMux", show_menubar: true, icon_name: "utilities-terminal");
 		/* Allow receiving detailed resize information. */
 		add_events (Gdk.EventMask.STRUCTURE_MASK | Gdk.EventMask.SUBSTRUCTURE_MASK);
-		this.set_default_size (600, 400);
+
+		settings = new Settings (application.application_id);
+		int width;
+		int height;
+		settings.get ("size", "(ii)", out width, out height);
+		set_default_size (width, height);
+
+		bool maximized;
+		settings.get ("maximized", "b", out maximized);
+		if (maximized) {
+			maximize ();
+		}
+
+		int x;
+		int y;
+		settings.get ("position", "(ii)", out x, out y);
+		move (x, y);
 		if (app is Application) {
 			/* Make menus and tabs for the open streams. */
 			foreach (var stream in ((Application) app).streams) {
@@ -106,6 +125,13 @@ public class TabbedMux.Window : Gtk.ApplicationWindow {
 			notebook.set_action_widget (close, Gtk.PackType.END);
 			close.clicked.connect (unowned_this.destroy_window);
 		}
+	}
+
+	public override bool window_state_event (Gdk.EventWindowState event) {
+		var result = base.window_state_event (event);
+		settings.set_boolean ("maximized",  Gdk.WindowState.MAXIMIZED in get_window ().get_state ());
+
+		return result;
 	}
 
 	/**
@@ -485,6 +511,16 @@ public class TabbedMux.Window : Gtk.ApplicationWindow {
 	 */
 	public override bool configure_event (Gdk.EventConfigure event) {
 		var result = base.configure_event (event);
+		if (configure_id != 0) {
+			GLib.Source.remove (configure_id);
+		}
+		configure_id = Timeout.add (100, update_window_configuration);
+
+		return result;
+	}
+	private bool update_window_configuration () {
+		configure_id = 0;
+
 		for (var it = 0; it < notebook.get_n_pages (); it++) {
 			var terminal = notebook.get_nth_page (it) as Terminal;
 			if (terminal != null) {
@@ -496,7 +532,20 @@ public class TabbedMux.Window : Gtk.ApplicationWindow {
 				}
 			}
 		}
-		return result;
+
+		if (Gdk.WindowState.MAXIMIZED in get_window ().get_state ()) {
+			return false;
+		}
+		int width;
+		int height;
+		get_size (out width, out height);
+		settings.set ("size", "(ii)", width, height);
+
+		int x;
+		int y;
+		get_position (out x, out y);
+		settings.set ("position", "(ii)", x, y);
+		return false;
 	}
 	public abstract class SessionItem : Gtk.MenuItem {
 		protected abstract TMuxStream? open () throws Error;

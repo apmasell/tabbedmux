@@ -11,5 +11,20 @@
       <summary>Local Sessions</summary>
       <description>A list of local sessions to connect.</description>
     </key>
+    <key name="size" type="(ii)">
+      <default>(600,400)</default>
+      <summary>Width and height of the main window.</summary>
+      <description>Last width and height of the main window in pixels.</description>
+    </key>
+    <key name="position" type="(ii)">
+      <default>(100,100)</default>
+      <summary>Position of the window.</summary>
+      <description>Last x and y position of the main window in pixels.</description>
+    </key>
+    <key name="maximized" type="b">
+      <default>false</default>
+      <summary>Is window maximized.</summary>
+      <description>Was the main window maximized.</description>
+    </key>
   </schema>
 </schemalist>
