@@ -82,16 +82,12 @@ public class TabbedMux.Terminal : Gtk.Box {
 	 * Capture URL events and dispatch the rest to Vte.
 	 */
 	private bool vte_button_press_event (Gdk.EventButton event) {
-		if (event.type == Gdk.EventType.BUTTON_PRESS && event.button == 1) {
+		if (event.type == Gdk.EventType.BUTTON_PRESS && event.button == 3) {
 			var url = get_link ((long) event.x, (long) event.y);
 			if (url != null) {
-				try {
-					AppInfo.launch_default_for_uri ((!)url, null);
-				} catch (Error e) {
-					var dialog = new Gtk.MessageDialog (get_toplevel () as Gtk.Window, Gtk.DialogFlags.MODAL, Gtk.MessageType.ERROR, Gtk.ButtonsType.OK, "%s", e.message);
-					dialog.run ();
-					dialog.destroy ();
-				}
+				var context_menu = new ContextMenu ((!)url);
+				context_menu.attach_to_widget (terminal, null);
+				context_menu.popup (null, null, null, event.button, event.time);
 				return true;
 			}
 		}

@@ -4,6 +4,7 @@ DESTDIR ?=
 
 SOURCES = \
 	application.vala \
+	contextmenu.vala \
 	keyboard_interactive.vala \
 	misc.c \
 	open.vala \
