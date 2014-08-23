@@ -311,6 +311,7 @@
             <property name="visible">True</property>
             <property name="can_focus">False</property>
             <property name="hexpand">True</property>
+            <property name="scrollable">True</property>
             <property name="vexpand">True</property>
             <signal name="page-removed" handler="page_removed" object="TabbedMuxWindow" swapped="no"/>
             <signal name="switch-page" handler="page_switched" object="TabbedMuxWindow" swapped="no"/>
