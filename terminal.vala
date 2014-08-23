@@ -47,6 +47,9 @@ public class TabbedMux.Terminal : Gtk.Box {
 		unowned Terminal unowned_this = this;
 
 		this.tmux_window = tmux_window;
+		tab_label.ellipsize = Pango.EllipsizeMode.MIDDLE;
+		tab_label.width_chars = 20;
+		tab_label.max_width_chars = tab_label.width_chars + 30;
 
 		/* Set up the VTE terminal. */
 		terminal.emulation = TERM_TYPE;
