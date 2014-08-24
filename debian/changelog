@@ -1,3 +1,13 @@
+tabbedmux (1.7~ppa0) trusty; urgency=medium
+
+  * Prevent tab labels from becoming too long
+  * Allow tabs to scroll when there are too many
+  * Add context menu to URLs
+  * Restore window size and position between runs
+  * Force UTF-8 support in tmux
+
+ -- Andre Masella <andre@masella.name>  Sun, 24 Aug 2014 07:35:55 -0400
+
 tabbedmux (1.6~ppa1) trusty; urgency=medium
 
   * Fix corruption of escape sequences
@@ -26,7 +36,7 @@ tabbedmux (1.5~ppa0) trusty; urgency=medium
 tabbedmux (1.4~ppa0) trusty; urgency=medium
 
   * Break send-keys into short blocks (avoids problem in tmux 1.8)
-  * Fix bug causing infintie loop when remote end dies unexpectedly
+  * Fix bug causing infinite loop when remote end dies unexpectedly
   * Wire notebook close button to correct destroy function
   * Rename new/disconnect menu items to be the same order
 
