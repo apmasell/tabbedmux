@@ -47,6 +47,7 @@ public class TabbedMux.Terminal : Gtk.Box {
 		unowned Terminal unowned_this = this;
 
 		this.tmux_window = tmux_window;
+		this.orientation = Gtk.Orientation.VERTICAL;
 		tab_label.ellipsize = Pango.EllipsizeMode.MIDDLE;
 		tab_label.width_chars = 20;
 		tab_label.max_width_chars = tab_label.width_chars + 30;
@@ -67,8 +68,10 @@ public class TabbedMux.Terminal : Gtk.Box {
 		int id = terminal.match_add_gregex (uri_regex, 0);
 		terminal.match_set_cursor_type (id, Gdk.CursorType.HAND2);
 
-		/* Put the terminal in the box. */
-		pack_start (terminal, false, false);
+		/* Put the terminal in a box in this box. This ensure that the terminal can have both vertical and horizontal free padding*/
+		var innerbox = new Gtk.Box (Gtk.Orientation.HORIZONTAL, 0);
+		innerbox.pack_start (terminal, false);
+		pack_start (innerbox, false);
 
 		/* Wire all the TMux events */
 		tmux_window.renamed.connect (unowned_this.update_tab_label);
@@ -166,7 +169,7 @@ public class TabbedMux.Terminal : Gtk.Box {
 		unowned Gtk.Border? border;
 		terminal.style_get ("inner-border", out border);
 		long width = (get_allocated_width () - (border == null ? 0 : ((!)border).left)) / terminal.get_char_width ();
-		long height = (terminal.get_allocated_height () - (border == null ? 0 : ((!)border).top)) / terminal.get_char_height ();
+		long height = (get_allocated_height () - (border == null ? 0 : ((!)border).top)) / terminal.get_char_height ();
 		if (width > 10 && height > 10) {
 			tmux_window.resize ((int) width, (int) height);
 		}
