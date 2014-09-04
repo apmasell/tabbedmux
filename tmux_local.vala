@@ -31,11 +31,10 @@ public class TabbedMux.TMuxLocalStream : TMuxStream {
 		int standard_input;
 		int standard_output;
 		/* Copy the environment, except TERM. */
-		string[] environment = { "TERM", TERM_TYPE };
+		string[] environment = { @"TERM=$(TERM_TYPE)" };
 		foreach (var variable in Environment.list_variables ()) {
 			if (variable != "TERM") {
-				environment += variable;
-				environment += Environment.get_variable (variable);
+				environment += "%s=%s".printf (variable, Environment.get_variable (variable));
 			}
 		}
 		/* Spawn, grabbing hold of stdin and stdout. */
