@@ -480,6 +480,39 @@ namespace TabbedMux {
 		}
 
 		/**
+		 * Paste text.
+		 *
+		 * Pastes text using bracketed pasting, when needed.
+		 */
+		public void paste_text (string text) {
+			try {
+				var buffer = new StringBuilder ();
+				buffer.append ("set-buffer \"");
+				for (var it = 0; it < text.length; it++) {
+					switch (text[it]) {
+					 case '\n' :
+						 buffer.append_c ('\r');
+						 break;
+
+					 case '\"':
+						 buffer.append_c ('\\');
+						 buffer.append_c ('\"');
+						 break;
+
+					 default:
+						 buffer.append_c (text[it]);
+						 break;
+					}
+				}
+				buffer.append_c ('\"');
+				stream.exec (buffer.str);
+				stream.exec (@"paste-buffer -dp -t @$(id)");
+			} catch (IOError e) {
+				critical ("%s:%s:%d: Paste text failed: %s", stream.name, stream.session_name, id, e.message);
+			}
+		}
+
+		/**
 		 * Get window size from TMux.
 		 */
 		public void pull_size () {

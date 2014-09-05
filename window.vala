@@ -68,6 +68,7 @@ public class TabbedMux.Window : Gtk.ApplicationWindow {
 
 	private Settings settings;
 	private uint configure_id;
+	private Gtk.Clipboard clipboard;
 
 	/**
 	 * These are the tabs that haven't been resized. We try to resize lazily since resizing can mangle the information in the remote session.
@@ -78,6 +79,8 @@ public class TabbedMux.Window : Gtk.ApplicationWindow {
 		Object (application: app, title: "TabbedMux", show_menubar: true, icon_name: "utilities-terminal");
 		/* Allow receiving detailed resize information. */
 		add_events (Gdk.EventMask.STRUCTURE_MASK | Gdk.EventMask.SUBSTRUCTURE_MASK);
+
+		clipboard =  Gtk.Clipboard.get_for_display (get_display (), Gdk.SELECTION_PRIMARY);
 
 		settings = new Settings (application.application_id);
 		int width;
@@ -437,7 +440,11 @@ public class TabbedMux.Window : Gtk.ApplicationWindow {
 	private void on_paste () {
 		var widget = notebook.get_nth_page (notebook.page) as Terminal;
 		if (widget != null) {
-			((!)widget).terminal.paste_clipboard ();
+			var tmux_window = ((!)widget).tmux_window;
+			var text = clipboard.wait_for_text ();
+			if (text != null) {
+				tmux_window.paste_text ((!)text);
+			}
 		}
 	}
 
