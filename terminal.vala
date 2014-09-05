@@ -64,6 +64,9 @@ public class TabbedMux.Terminal : Gtk.Box {
 		terminal.commit.connect (unowned_this.vte_commit);
 		terminal.button_press_event.connect (unowned_this.vte_button_press_event);
 		terminal.drag_data_received.connect (unowned_this.vte_drag);
+		/* Force VTE to go into bracketed paste mode, since we won't get the right
+		 * signals from TMux. */
+		terminal.feed ("\033[?2004h".data);
 
 		int id = terminal.match_add_gregex (uri_regex, 0);
 		terminal.match_set_cursor_type (id, Gdk.CursorType.HAND2);
