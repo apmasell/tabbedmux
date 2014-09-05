@@ -1,3 +1,11 @@
+tabbedmux (1.8~ppa0) trusty; urgency=medium
+
+  * Force bracketed pate mode
+  * Construct environment for local TMux properly
+  * Make resizing shrink the terminal vertically too
+
+ -- Andre Masella <andre@masella.name>  Fri, 05 Sep 2014 08:01:20 -0400
+
 tabbedmux (1.7~ppa0) trusty; urgency=medium
 
   * Prevent tab labels from becoming too long
