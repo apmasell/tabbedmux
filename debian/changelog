@@ -1,3 +1,9 @@
+tabbedmux (1.8~ppa1) trusty; urgency=medium
+
+  * Fixed bracketed paste mode
+
+ -- Andre Masella <andre@masella.name>  Fri, 05 Sep 2014 19:13:16 -0400
+
 tabbedmux (1.8~ppa0) trusty; urgency=medium
 
   * Force bracketed pate mode
