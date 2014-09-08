@@ -70,11 +70,6 @@ public class TabbedMux.Window : Gtk.ApplicationWindow {
 	private uint configure_id;
 	private Gtk.Clipboard clipboard;
 
-	/**
-	 * These are the tabs that haven't been resized. We try to resize lazily since resizing can mangle the information in the remote session.
-	 */
-	private Gee.Set<Terminal> unsized_children = new Gee.HashSet<Terminal> ();
-
 	internal Window (Application app) {
 		Object (application: app, title: "TabbedMux", show_menubar: true, icon_name: "utilities-terminal");
 		/* Allow receiving detailed resize information. */
@@ -248,7 +243,6 @@ public class TabbedMux.Window : Gtk.ApplicationWindow {
 		message ("Adding window from %s.", window.stream.name);
 		show_all ();
 		notebook.set_current_page (id);
-		unsized_children.add (terminal);
 	}
 
 	/**
@@ -482,7 +476,6 @@ public class TabbedMux.Window : Gtk.ApplicationWindow {
 			var terminal = notebook.get_nth_page (it) as Terminal;
 			if (terminal != null && ((!)terminal).tmux_window == tmux_window) {
 				notebook.remove_page (it);
-				unsized_children.remove ((!)terminal);
 				return;
 			}
 		}
@@ -501,10 +494,7 @@ public class TabbedMux.Window : Gtk.ApplicationWindow {
 		if (terminal != null) {
 			message ("Switched terminal.");
 			/* If we've switched to a terminal that doesn't know about the size of the window, force it to resize. */
-			if ((!)terminal in unsized_children) {
-				((!)terminal).resize_tmux ();
-				unsized_children.remove ((!)terminal);
-			}
+			((!)terminal).resize_tmux ();
 			copy_item.sensitive = ((!)terminal).terminal.get_has_selection ();
 			var stream = ((!)terminal).tmux_window.stream;
 			for (var it = 0; it < notebook.get_n_pages (); it++) {
@@ -547,12 +537,7 @@ public class TabbedMux.Window : Gtk.ApplicationWindow {
 		for (var it = 0; it < notebook.get_n_pages (); it++) {
 			var terminal = notebook.get_nth_page (it) as Terminal;
 			if (terminal != null) {
-				if (it == notebook.page) {
-					((!)terminal).resize_tmux ();
-					unsized_children.remove ((!)terminal);
-				} else {
-					unsized_children.add ((!)terminal);
-				}
+				((!)terminal).resize_tmux ();
 			}
 		}
 
