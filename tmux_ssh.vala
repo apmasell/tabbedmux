@@ -53,9 +53,9 @@ internal class TabbedMux.TMuxSshStream : TMuxStream {
 				/* Stuff any data into our buffer. */
 				buffer.append_len ((string) data, result);
 			} else if ((SSH2.Error)result == SSH2.Error.AGAIN || result == 0 && channel.eof () != 1) {
-				/* There is no data currently, so wait for the main loop to re-invoke us.
+				/* There is no data currently, so wait for the main loop to re-invoke us. */
 
-				   /* Perform an obligatory SSH keep-alive.  */
+				/* Perform an obligatory SSH keep-alive.  */
 				int seconds_to_next;
 				if (session.send_keep_alive (out seconds_to_next) < 0) {
 					char[] error_message;
