@@ -384,6 +384,22 @@ public class TabbedMux.Window : Gtk.ApplicationWindow {
 	}
 
 	[GtkCallback]
+	private void force_size_update () {
+		var widget = notebook.get_nth_page (notebook.page) as Terminal;
+		if (widget != null) {
+			((!)widget).tmux_window.pull_size ();
+		}
+	}
+
+	[GtkCallback]
+	private void resize_tmux () {
+		var widget = notebook.get_nth_page (notebook.page) as Terminal;
+		if (widget != null) {
+			((!)widget).resize_tmux ();
+		}
+	}
+
+	[GtkCallback]
 	private void zoom_in () {
 		var widget = notebook.get_nth_page (notebook.page) as Terminal;
 		if (widget != null) {
