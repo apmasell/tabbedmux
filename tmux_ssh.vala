@@ -58,13 +58,7 @@ internal class TabbedMux.TMuxSshStream : TMuxStream {
 				/* Perform an obligatory SSH keep-alive.  */
 				int seconds_to_next;
 				if (session.send_keep_alive (out seconds_to_next) < 0) {
-					char[] error_message;
-					session.get_last_error (out error_message);
-					critical ("%s:%s: %zd %s", name, session_name, result, (string) error_message);
-					if (channel.eof () != 0 && channel.wait_closed () != SSH2.Error.NONE) {
-						throw new IOError.CLOSED (@"Remote TMux terminated with $(channel.exit_status).");
-					}
-					return null;
+					return throw_channel_error (true);
 				}
 				/*
 				 * If there is either no data or reading would block,
@@ -91,26 +85,41 @@ internal class TabbedMux.TMuxSshStream : TMuxStream {
 				}
 			} else if ((SSH2.Error)result == SSH2.Error.SOCKET_RECV) {
 				/* Some error in the underlying socket. */
-				critical ("%s:%s: %s", name, session_name, strerror (errno));
-				return null;
-			} else if (result < 0) {
-				/* Some other SSH error to complain about. */
-				char[] error_message;
-				session.get_last_error (out error_message);
-				critical ("%s:%s: %zd %s", name, session_name, result, (string) error_message);
-				if (channel.eof () != 0 && channel.wait_closed () != SSH2.Error.NONE) {
-					throw new IOError.CLOSED (@"Remote TMux terminated with $(channel.exit_status).");
-				}
-				return null;
+				int no = errno;
+				critical ("%s:%s: %s", name, session_name, strerror (no));
+				throw_errno (no);
 			} else {
-				/* The channel is dead, probably because the remote process exited. */
-				return null;
+				/* Some other SSH error to complain about. */
+				return throw_channel_error (result < 0);
 			}
 		}
 		/* Take the whole line from the buffer and return it. */
 		var str = buffer.str[0 : new_line];
 		buffer.erase (0, new_line + 1);
 		return str;
+	}
+
+	private string? throw_channel_error (bool check_message = false) throws IOError {
+		char[]? error_message = null;
+		if (check_message) {
+			session.get_last_error (out error_message);
+			critical ("%s:%s: %s", name, session_name, (string) error_message);
+		}
+		if (channel.eof () != 0 && channel.wait_closed () != SSH2.Error.NONE) {
+			throw new IOError.CLOSED (@"Unable to close channel.");
+		}
+		if (error_message != null) {
+			throw new IOError.FAILED ((string) error_message);
+		}
+		if (channel.exit_status > 0) {
+			throw new IOError.CLOSED (@"Remote TMux terminated with $(channel.exit_status).");
+		}
+		char[]? signal_name;
+		char[]? language_tag;
+		if (channel.get_exit_signal (out signal_name, out error_message, out language_tag) == SSH2.Error.NONE && signal_name != null) {
+			throw new IOError.CLOSED (@"Remote TMux caught signal $((string) signal_name).");
+		}
+		return null;
 	}
 
 	protected override void write (uint8[] data) throws IOError {
