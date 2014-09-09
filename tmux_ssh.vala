@@ -52,7 +52,7 @@ internal class TabbedMux.TMuxSshStream : TMuxStream {
 			if (result > 0) {
 				/* Stuff any data into our buffer. */
 				buffer.append_len ((string) data, result);
-			} else if ((SSH2.Error)result == SSH2.Error.AGAIN || result == 0 && channel.eof () != 1) {
+			} else if ((SSH2.Error)result == SSH2.Error.AGAIN) {
 				/* There is no data currently, so wait for the main loop to re-invoke us. */
 
 				/* Perform an obligatory SSH keep-alive.  */
@@ -102,11 +102,9 @@ internal class TabbedMux.TMuxSshStream : TMuxStream {
 					throw new IOError.CLOSED (@"Remote TMux terminated with $(channel.exit_status).");
 				}
 				return null;
-			} else if (channel.eof () == 1) {
+			} else {
 				/* The channel is dead, probably because the remote process exited. */
 				return null;
-			} else {
-				assert_not_reached ();
 			}
 		}
 		/* Take the whole line from the buffer and return it. */
