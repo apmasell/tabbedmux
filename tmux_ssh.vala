@@ -240,4 +240,5 @@ internal class TabbedMux.TMuxSshStream : TMuxStream {
 }
 namespace TabbedMux {
 	private static extern int search_buffer (StringBuilder buffer);
+	private static extern void throw_errno (int err_number) throws IOError;
 }

@@ -11,6 +11,12 @@ gchar *tabbed_mux_strip(
 	return g_strstrip(copy);
 }
 
+void tabbed_mux_throw_errno(
+	gint err_number,
+	GError ** error) {
+	g_set_error_literal(error, G_IO_ERROR, g_io_error_from_errno(err_number), g_strerror(err_number));
+}
+
 /**
  * Find the offset of the first newline in a GString.
  */
