@@ -56,6 +56,12 @@ namespace TabbedMux {
 				window.closed ();
 			}
 		}
+
+		/**
+		 * Update the font in all the interested children.
+		 */
+		public signal void change_font (Pango.FontDescription? font);
+
 		/**
 		 * Event fired when the TMux session is renamed.
 		 */
@@ -172,7 +178,7 @@ namespace TabbedMux {
 					 /*
 					  * TMux sent some kind of data. Find the matching cookie and process the data.
 					  */
-					 case "%begin":
+					 case "%begin" :
 						 var time = decoder.pop_id ();
 						 var output_num = decoder.pop_id ();
 						 NextOutput action = NextOutput.NONE;

@@ -78,6 +78,7 @@ public class TabbedMux.Terminal : Gtk.Box {
 		tmux_window.stream.renamed.connect (unowned_this.update_tab_label);
 		tmux_window.rx_data.connect (terminal.feed);
 		tmux_window.size_changed.connect (unowned_this.set_size_from_tmux);
+		tmux_window.stream.change_font.connect (unowned_this.update_font);
 
 		update_tab_label ();
 
@@ -133,14 +134,18 @@ public class TabbedMux.Terminal : Gtk.Box {
 		var font = terminal.font_desc;
 		font.set_size (font.get_size () + Pango.SCALE * (increase ? 1 : -1));
 		if (font.get_size () > Pango.SCALE) {
-			terminal.font_desc = font;
+			tmux_window.stream.change_font (font);
 		} else {
 			message ("Terminal font size (%d) too small. Not adjusting.", font.get_size ());
 		}
 	}
 
 	public void reset_font () {
-		terminal.font_desc = null;
+		tmux_window.stream.change_font (null);
+	}
+
+	private void update_font (Pango.FontDescription? font) {
+		terminal.font_desc = font;
 	}
 
 	/**
