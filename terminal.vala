@@ -64,6 +64,8 @@ public class TabbedMux.Terminal : Gtk.Box {
 		terminal.commit.connect (unowned_this.vte_commit);
 		terminal.button_press_event.connect (unowned_this.vte_button_press_event);
 		terminal.drag_data_received.connect (unowned_this.vte_drag);
+		terminal.increase_font_size.connect (unowned_this.increase_font);
+		terminal.decrease_font_size.connect (unowned_this.decrease_font);
 
 		int id = terminal.match_add_gregex (uri_regex, 0);
 		terminal.match_set_cursor_type (id, Gdk.CursorType.HAND2);
@@ -128,6 +130,15 @@ public class TabbedMux.Terminal : Gtk.Box {
 		tab_label.set_text (tmux_window.title);
 		tab_label.set_tooltip_text (@"$(tmux_window.stream.session_name) - $(tmux_window.stream.name)");
 		queue_draw ();
+	}
+
+	private void increase_font () {
+		message ("Increase font");
+		adjust_font (true);
+	}
+	private void decrease_font () {
+		message ("Decrease font");
+		adjust_font (false);
 	}
 
 	public void adjust_font (bool increase) {
