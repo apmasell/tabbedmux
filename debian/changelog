@@ -1,3 +1,13 @@
+tabbedmux (1.9~ppa0) trusty; urgency=medium
+
+  * Allow increasing font size with keypad
+  * Change font size change to be per session instead of per pane
+  * Change EAGAIN handlingi in libssh2
+  * Remove lazy resizing, since it doesn't seem to help
+  * Add menu items for resizing
+
+ -- Andre Masella <andre@masella.name>  Tue, 09 Sep 2014 07:03:02 -0400
+
 tabbedmux (1.8~ppa1) trusty; urgency=medium
 
   * Fixed bracketed paste mode
