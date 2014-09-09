@@ -13,7 +13,8 @@ gchar *tabbed_mux_strip(
 
 void tabbed_mux_throw_errno(
 	gint err_number,
-	GError ** error) {
+	GError **error) {
+
 	g_set_error_literal(error, G_IO_ERROR, g_io_error_from_errno(err_number), g_strerror(err_number));
 }
 

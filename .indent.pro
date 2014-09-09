@@ -4,6 +4,7 @@
 -T GAsyncResult
 -T gboolean
 -T gchar
+-T GError
 -T gint
 -T gpointer
 -T GSimpleAsyncResult
