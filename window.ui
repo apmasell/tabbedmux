@@ -218,7 +218,7 @@
                       </object>
                     </child>
                     <child>
-                      <object class="GtkMenuItem" id="rename_window">
+                      <object class="GtkMenuItem" id="rename_window_item">
                         <property name="visible">True</property>
                         <property name="can_focus">False</property>
                         <property name="label" translatable="yes">Rename Window...</property>

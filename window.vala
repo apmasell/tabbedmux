@@ -54,9 +54,13 @@ public class TabbedMux.Window : Gtk.ApplicationWindow {
 	[GtkChild]
 	private Gtk.Menu new_menu;
 	[GtkChild]
+	private Gtk.MenuItem new_session_item;
+	[GtkChild]
 	private Gtk.Notebook notebook;
 	[GtkChild]
 	private Gtk.Menu disconnect_menu;
+	[GtkChild]
+	private Gtk.MenuItem paste_item;
 	[GtkChild]
 	private Gtk.Menu saved_menu;
 	[GtkChild]
@@ -65,6 +69,8 @@ public class TabbedMux.Window : Gtk.ApplicationWindow {
 	private Gtk.Menu remove_saved_menu;
 	[GtkChild]
 	private Gtk.MenuItem remove_saved_item;
+	[GtkChild]
+	private Gtk.MenuItem rename_window_item;
 
 	private Settings settings;
 	private uint configure_id;
@@ -93,6 +99,14 @@ public class TabbedMux.Window : Gtk.ApplicationWindow {
 		int y;
 		settings.get ("position", "(ii)", out x, out y);
 		move (x, y);
+
+		var accel_group = new Gtk.AccelGroup();
+		add_accel_group(accel_group);
+		copy_item.add_accelerator("activate", accel_group, 'C', Gdk.ModifierType.CONTROL_MASK | Gdk.ModifierType.SHIFT_MASK, Gtk.AccelFlags.VISIBLE);
+		new_session_item.add_accelerator("activate", accel_group, 'T', Gdk.ModifierType.CONTROL_MASK | Gdk.ModifierType.SHIFT_MASK, Gtk.AccelFlags.VISIBLE);
+		paste_item.add_accelerator("activate", accel_group, 'V', Gdk.ModifierType.CONTROL_MASK | Gdk.ModifierType.SHIFT_MASK, Gtk.AccelFlags.VISIBLE);
+		rename_window_item.add_accelerator("activate", accel_group, 'R', Gdk.ModifierType.CONTROL_MASK | Gdk.ModifierType.SHIFT_MASK, Gtk.AccelFlags.VISIBLE);
+
 		if (app is Application) {
 			/* Make menus and tabs for the open streams. */
 			foreach (var stream in ((Application) app).streams) {
