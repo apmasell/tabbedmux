@@ -505,6 +505,11 @@ namespace TabbedMux {
 						 buffer.append_c ('\"');
 						 break;
 
+					 case '\\':
+						 buffer.append_c ('\\');
+						 buffer.append_c ('\\');
+						 break;
+
 					 default:
 						 buffer.append_c (text[it]);
 						 break;
