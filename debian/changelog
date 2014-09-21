@@ -1,3 +1,10 @@
+tabbedmux (1.10~ppa0) trusty; urgency=medium
+
+  * Add accelerators to copy, paste, new, and rename
+  * Fix bug where \ is not pasted properly
+
+ -- Andre Masella <andre@masella.name>  Sat, 20 Sep 2014 20:49:38 -0400
+
 tabbedmux (1.9~ppa0) trusty; urgency=medium
 
   * Allow increasing font size with keypad
