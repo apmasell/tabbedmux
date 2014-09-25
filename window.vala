@@ -100,12 +100,12 @@ public class TabbedMux.Window : Gtk.ApplicationWindow {
 		settings.get ("position", "(ii)", out x, out y);
 		move (x, y);
 
-		var accel_group = new Gtk.AccelGroup();
-		add_accel_group(accel_group);
-		copy_item.add_accelerator("activate", accel_group, 'C', Gdk.ModifierType.CONTROL_MASK | Gdk.ModifierType.SHIFT_MASK, Gtk.AccelFlags.VISIBLE);
-		new_session_item.add_accelerator("activate", accel_group, 'T', Gdk.ModifierType.CONTROL_MASK | Gdk.ModifierType.SHIFT_MASK, Gtk.AccelFlags.VISIBLE);
-		paste_item.add_accelerator("activate", accel_group, 'V', Gdk.ModifierType.CONTROL_MASK | Gdk.ModifierType.SHIFT_MASK, Gtk.AccelFlags.VISIBLE);
-		rename_window_item.add_accelerator("activate", accel_group, 'R', Gdk.ModifierType.CONTROL_MASK | Gdk.ModifierType.SHIFT_MASK, Gtk.AccelFlags.VISIBLE);
+		var accel_group = new Gtk.AccelGroup ();
+		add_accel_group (accel_group);
+		copy_item.add_accelerator ("activate", accel_group, 'C', Gdk.ModifierType.CONTROL_MASK | Gdk.ModifierType.SHIFT_MASK, Gtk.AccelFlags.VISIBLE);
+		new_session_item.add_accelerator ("activate", accel_group, 'T', Gdk.ModifierType.CONTROL_MASK | Gdk.ModifierType.SHIFT_MASK, Gtk.AccelFlags.VISIBLE);
+		paste_item.add_accelerator ("activate", accel_group, 'V', Gdk.ModifierType.CONTROL_MASK | Gdk.ModifierType.SHIFT_MASK, Gtk.AccelFlags.VISIBLE);
+		rename_window_item.add_accelerator ("activate", accel_group, 'R', Gdk.ModifierType.CONTROL_MASK | Gdk.ModifierType.SHIFT_MASK, Gtk.AccelFlags.VISIBLE);
 
 		if (app is Application) {
 			/* Make menus and tabs for the open streams. */
