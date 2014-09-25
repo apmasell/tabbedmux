@@ -295,6 +295,15 @@
                         <signal name="activate" handler="zoom_normal" swapped="no"/>
                       </object>
                     </child>
+                    <child>
+                      <object class="GtkMenuItem" id="choose_font_item">
+                        <property name="visible">True</property>
+                        <property name="can_focus">False</property>
+                        <property name="label" translatable="yes">Select Terminal Font...</property>
+                        <property name="use_underline">True</property>
+                        <signal name="activate" handler="open_choose_font" swapped="no"/>
+                      </object>
+                    </child>
                   </object>
                 </child>
               </object>

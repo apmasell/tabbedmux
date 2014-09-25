@@ -63,6 +63,7 @@ public class TabbedMux.Terminal : Gtk.Box {
 		/* Handle key and mouse presses */
 		terminal.commit.connect (unowned_this.vte_commit);
 		terminal.button_press_event.connect (unowned_this.vte_button_press_event);
+		terminal.char_size_changed.connect (unowned_this.set_size_from_tmux);
 		terminal.drag_data_received.connect (unowned_this.vte_drag);
 		terminal.increase_font_size.connect (unowned_this.increase_font);
 		terminal.decrease_font_size.connect (unowned_this.decrease_font);

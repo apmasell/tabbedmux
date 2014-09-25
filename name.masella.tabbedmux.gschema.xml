@@ -26,5 +26,10 @@
       <summary>Is window maximized.</summary>
       <description>Was the main window maximized.</description>
     </key>
+    <key name="font" type="s">
+      <default>"Monospace 10"</default>
+      <summary>Default terminal font.</summary>
+      <description>The typeface used for the terminal window.</description>
+    </key>
   </schema>
 </schemalist>

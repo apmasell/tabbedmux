@@ -43,7 +43,9 @@ public class TabbedMux.DisconnectMenuItem : MenuItem {
 		stream.cancel ();
 	}
 }
-
+bool is_monospace_font (Pango.FontFamily family, Pango.FontFace face) {
+	return family.is_monospace ();
+}
 /**
  * The main window for holding the set of tabs.
  */
@@ -76,14 +78,24 @@ public class TabbedMux.Window : Gtk.ApplicationWindow {
 	private uint configure_id;
 	private Gtk.Clipboard clipboard;
 
+	private Gtk.FontChooserDialog font_chooser;
+
 	internal Window (Application app) {
 		Object (application: app, title: "TabbedMux", show_menubar: true, icon_name: "utilities-terminal");
+		unowned Window unowned_this = this;
+
 		/* Allow receiving detailed resize information. */
 		add_events (Gdk.EventMask.STRUCTURE_MASK | Gdk.EventMask.SUBSTRUCTURE_MASK);
 
 		clipboard =  Gtk.Clipboard.get_for_display (get_display (), Gdk.SELECTION_PRIMARY);
 
 		settings = new Settings (application.application_id);
+
+		font_chooser = new Gtk.FontChooserDialog ("Terminal Font", this);
+		font_chooser.set_filter_func (is_monospace_font);
+		settings.bind ("font", font_chooser, "font", SettingsBindFlags.GET);
+		settings.changed.connect (unowned_this.inform_change);
+
 		int width;
 		int height;
 		settings.get ("size", "(ii)", out width, out height);
@@ -116,8 +128,6 @@ public class TabbedMux.Window : Gtk.ApplicationWindow {
 			var saved_sessions = ((Application) app).saved_sessions;
 			saved_sessions.changed.connect (this.on_saved_changed);
 			on_saved_changed (saved_sessions);
-
-			unowned Window unowned_this = this;
 
 			/* Notebook new window button. */
 			var add = new Gtk.Button ();
@@ -243,6 +253,23 @@ public class TabbedMux.Window : Gtk.ApplicationWindow {
 		}
 	}
 
+	[GtkCallback]
+	internal void open_choose_font () {
+		if (font_chooser.run () == Gtk.ResponseType.OK) {
+			settings.set_string ("font", font_chooser.font);
+		}
+		font_chooser.hide ();
+	}
+
+	private void inform_change (string setting) {
+		if (setting == "font" && application is Application) {
+			var font_desc = Pango.FontDescription.from_string (settings.get_string ("font"));
+			foreach (var stream in  ((Application) application).streams) {
+				stream.change_font (font_desc);
+			}
+		}
+	}
+
 	/**
 	 * Make a tab for a new TMux window.
 	 */
@@ -251,6 +278,7 @@ public class TabbedMux.Window : Gtk.ApplicationWindow {
 		unowned Window unowned_this = this;
 		// TODO disconnect stream on close of last tab?
 		window.closed.connect (unowned_this.on_tmux_window_closed);
+		terminal.terminal.font_desc = Pango.FontDescription.from_string (settings.get_string ("font"));
 		var id = notebook.append_page (terminal, terminal.tab_label);
 		notebook.set_tab_reorderable (terminal, true);
 		terminal.terminal.selection_changed.connect (unowned_this.on_selection_changed);
