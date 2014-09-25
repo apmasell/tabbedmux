@@ -152,10 +152,6 @@ public class TabbedMux.Terminal : Gtk.Box {
 		}
 	}
 
-	public void reset_font () {
-		tmux_window.stream.change_font (null);
-	}
-
 	private void update_font (Pango.FontDescription? font) {
 		terminal.font_desc = font;
 	}

@@ -455,7 +455,8 @@ public class TabbedMux.Window : Gtk.ApplicationWindow {
 	private void zoom_normal () {
 		var widget = notebook.get_nth_page (notebook.page) as Terminal;
 		if (widget != null) {
-			((!)widget).reset_font ();
+			var font_desc = Pango.FontDescription.from_string (settings.get_string ("font"));
+			((!)widget).tmux_window.stream.change_font (font_desc);
 		}
 	}
 
