@@ -147,6 +147,9 @@ public class TabbedMux.Window : Gtk.ApplicationWindow {
 			notebook.set_action_widget (close, Gtk.PackType.END);
 			close.clicked.connect (unowned_this.destroy_window);
 		}
+		var timeout = new TimeoutSource (500);
+		timeout.set_callback (unowned_this.force_size_update);
+		timeout.attach (MainContext.default ());
 	}
 
 	public override bool window_state_event (Gdk.EventWindowState event) {
