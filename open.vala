@@ -98,11 +98,8 @@ public class TabbedMux.OpenDialog : Gtk.Dialog {
 									  }
 									  deal_with_stream (stream);
 								  } catch (Error e) {
-									  message ("Catch");
 									  show_error (this, e.message);
-									  message ("Showed");
 								  }
-								  message ("Kill busy");
 								  busy_dialog.destroy ();
 							  });
 			} else {
