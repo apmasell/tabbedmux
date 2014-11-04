@@ -163,14 +163,14 @@ internal class TabbedMux.TMuxSshStream : TMuxStream {
 		/*
 		 * Create a GIO socket for that host. We do this so we can use async methods on it.
 		 */
-		busy_dialog.message = @"Connecting to '$(session_name) on $(username)@$(host):$(port)...";
+		busy_dialog.message = @"Connecting to '$(session_name)' on $(username)@$(host):$(port)...";
 		var client = new SocketClient ();
 		var connection = yield client.connect_to_host_async (host, port);
 
 		/*
 		 * Tell libssh2 to do the handshake.
 		 */
-		busy_dialog.message = @"Handshaking '$(session_name) on $(username)@$(host):$(port)...";
+		busy_dialog.message = @"Handshaking '$(session_name)' on $(username)@$(host):$(port)...";
 		if ((yield ssh_wait_glue<bool> (session, connection.socket, () => session.handshake (connection.socket.fd), busy_dialog.cancellable)) != SSH2.Error.NONE) {
 			char[] error_message;
 			session.get_last_error (out error_message);
@@ -235,7 +235,7 @@ internal class TabbedMux.TMuxSshStream : TMuxStream {
 		 */
 		unowned string? auth_methods = null;
 
-		busy_dialog.message = @"Getting authentication methods for '$(session_name) on $(username)@$(host):$(port)...";
+		busy_dialog.message = @"Getting authentication methods for '$(session_name)' on $(username)@$(host):$(port)...";
 		if ((yield ssh_wait_glue<bool> (session, connection.socket, () => {
 							auth_methods = session.list_authentication (username.data);
 							return auth_methods == null ? session.last_error : SSH2.Error.NONE;
@@ -251,7 +251,7 @@ internal class TabbedMux.TMuxSshStream : TMuxStream {
 			}
 			switch (method) {
 			 case "publickey" :
-				 busy_dialog.message = @"Trying public key authentication for '$(session_name) on $(username)@$(host):$(port)...";
+				 busy_dialog.message = @"Trying public key authentication for '$(session_name)' on $(username)@$(host):$(port)...";
 				 yield do_public_key_auth<bool> (connection.socket, session, username, host, port, busy_dialog.cancellable, get_password);
 				 break;
 
@@ -259,7 +259,7 @@ internal class TabbedMux.TMuxSshStream : TMuxStream {
 				 if (get_password == null) {
 					 break;
 				 }
-				 busy_dialog.message = @"Trying interactive authentication for '$(session_name) on $(username)@$(host):$(port)...";
+				 busy_dialog.message = @"Trying interactive authentication for '$(session_name)' on $(username)@$(host):$(port)...";
 				 switch (yield ssh_wait_glue<bool> (session, connection.socket, () => password_adapter (session, username, (!)get_password), busy_dialog.cancellable)) {
 				  case SSH2.Error.NONE :
 				  case SSH2.Error.AUTHENTICATION_FAILED :
@@ -275,7 +275,7 @@ internal class TabbedMux.TMuxSshStream : TMuxStream {
 				 if (get_password == null) {
 					 break;
 				 }
-				 busy_dialog.message = @"Trying password authentication for '$(session_name) on $(username)@$(host):$(port)...";
+				 busy_dialog.message = @"Trying password authentication for '$(session_name)' on $(username)@$(host):$(port)...";
 				 var password = password_simple ("Enter password:", (!)get_password);
 				 if (password == null) {
 					 break;
@@ -306,7 +306,7 @@ internal class TabbedMux.TMuxSshStream : TMuxStream {
 		/*
 		 * Try to exec tmux in a shell on the remote end.
 		 */
-		busy_dialog.message = @"Starting TMux on '$(session_name) on $(username)@$(host):$(port)...";
+		busy_dialog.message = @"Starting TMux on '$(session_name)' on $(username)@$(host):$(port)...";
 		SSH2.Channel? channel = null;
 		if ((yield ssh_wait_glue<bool> (session, connection.socket, () => { channel = session.open_channel (); return channel == null ? session.last_error : SSH2.Error.NONE; }, busy_dialog.cancellable)) != SSH2.Error.NONE) {
 			throw_session_error<bool> (session);
