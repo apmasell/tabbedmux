@@ -151,7 +151,6 @@ namespace TabbedMux {
 		 */
 		internal void exec (string command, NextOutput output_type = NextOutput.NONE, int window_id = 0) throws IOError {
 			var command_id = ++output_num;
-			message ("%s:%s: Sending command %d: %s", name, session_name, command_id, command);
 			write (command.data);
 			write (new uint8[] { '\n' });
 			var todo = new OutputTodo ();
@@ -173,7 +172,6 @@ namespace TabbedMux {
 						return "No more data to read";
 					}
 					var decoder = Decoder ((!)(owned) str);
-					message ("%s:%s: Processing: %s", name, session_name, decoder.command);
 					switch (decoder.command) {
 					 /*
 					  * TMux sent some kind of data. Find the matching cookie and process the data.
@@ -232,7 +230,6 @@ namespace TabbedMux {
 							   * A list of windows.
 							   */
 							  case NextOutput.WINDOWS:
-								  message ("%s:%s: Received pane information. %s", name, session_name, (!)output_line);
 								  var info_decoder = Decoder ((!)(owned) output_line, false, ':');
 								  var id = info_decoder.pop_id ();
 								  var title = info_decoder.get_remainder ();
@@ -254,7 +251,6 @@ namespace TabbedMux {
 								  break;
 
 							  case NextOutput.WINDOW_SIZE:
-								  message ("%s:%s: Received pane information. %s", name, session_name, (!)output_line);
 								  var info_decoder = Decoder ((!)(owned) output_line, false, ':');
 								  var id = info_decoder.pop_id ();
 								  var width = info_decoder.pop_id ();
@@ -278,8 +274,6 @@ namespace TabbedMux {
 						 if (output_line == null) {
 							 message ("%s:%s: End of input reading data block from TMux.", name, session_name);
 							 return "Connection unceremoniously terminated.";
-						 } else {
-							 message ("%s:%s: Finished output block: %s", name, session_name, (!)output_line);
 						 }
 						 break;
 
@@ -370,7 +364,6 @@ namespace TabbedMux {
 							 var window = windows[window_id];
 							 var text = decoder.get_remainder ();
 							 window.rx_data (text.data);
-							 message ("%s:%s: Output for window %d.", name, session_name, window_id);
 						 }
 						 break;
 
