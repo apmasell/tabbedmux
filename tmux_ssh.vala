@@ -176,6 +176,60 @@ internal class TabbedMux.TMuxSshStream : TMuxStream {
 			session.get_last_error (out error_message);
 			throw new IOError.INVALID_DATA ((string) error_message);
 		}
+
+		/* List the know hosts */
+		var known_hosts = session.get_known_hosts ();
+		if (known_hosts == null) {
+			throw_session_error<bool> (session);
+		}
+		switch (known_hosts.read_file (@"$(Environment.get_home_dir ())/.ssh/known_hosts")) {
+		 case SSH2.Error.NONE :
+			 SSH2.KeyType type;
+			 var key = session.get_host_key (out type);
+			 unowned SSH2.Host? known;
+			 switch (known_hosts.check (@"[$(host)]:$(port)", key,  SSH2.HostFormat.TYPE_PLAIN | SSH2.HostFormat.KEYENC_RAW, out known)) {
+			  case SSH2.CheckResult.MATCH :
+				  break;
+
+			  case SSH2.CheckResult.MISMATCH :
+				  var mismatch_dialog = new Gtk.Dialog.with_buttons ("SSH Host Key - TabbedMux", busy_dialog, Gtk.DialogFlags.MODAL, "Proceed Anyway", Gtk.ButtonsType.OK, "Stop Immediately", Gtk.ButtonsType.CANCEL);
+				  if (!run_host_key_dialog<bool> (mismatch_dialog, "KEY MISTMATCH!!! POSSIBLE ATTACK!!!", session, host, port)) {
+					  return null;
+				  }
+				  mismatch_dialog.destroy ();
+				  break;
+
+			  case SSH2.CheckResult.NOTFOUND :
+				  //TODO allow add
+				  var unknown_dialog = new Gtk.Dialog.with_buttons ("SSH Host Key - TabbedMux", busy_dialog, Gtk.DialogFlags.MODAL, "Accept Once", Gtk.ButtonsType.OK, "Cancel", Gtk.ButtonsType.CANCEL);
+				  if (!run_host_key_dialog<bool> (unknown_dialog, "Unknown host.", session, host, port)) {
+					  return null;
+				  }
+				  break;
+
+			  case SSH2.CheckResult.FAILURE :
+				  var fail_dialog = new Gtk.Dialog.with_buttons ("SSH Host Key - TabbedMux", busy_dialog, Gtk.DialogFlags.MODAL, "Accept Once", Gtk.ButtonsType.OK, "Cancel", Gtk.ButtonsType.CANCEL);
+				  if (!run_host_key_dialog<bool> (fail_dialog, "Failed to check for public key.", session, host, port)) {
+					  return null;
+				  }
+				  break;
+			 }
+			 break;
+
+		 case SSH2.Error.FILE :
+		 case SSH2.Error.METHOD_NOT_SUPPORTED :
+		 case SSH2.Error.KNOWN_HOSTS :
+			 //TODO allow add
+			 var no_file_dialog = new Gtk.Dialog.with_buttons ("SSH Host Key - TabbedMux", busy_dialog, Gtk.DialogFlags.MODAL, "Accept Once", Gtk.ButtonsType.OK, "Cancel", Gtk.ButtonsType.CANCEL);
+			 if (!run_host_key_dialog<bool> (no_file_dialog, "No database of known hosts.", session, host, port)) {
+				 return null;
+			 }
+			 break;
+
+		 default :
+			 throw_session_error<bool> (session);
+			 break;
+		}
 		/*
 		 * Try to authenticate.
 		 */
@@ -217,7 +271,7 @@ internal class TabbedMux.TMuxSshStream : TMuxStream {
 				 }
 				 break;
 
-			 case "password" :
+			 case "password":
 				 if (get_password == null) {
 					 break;
 				 }
@@ -230,21 +284,21 @@ internal class TabbedMux.TMuxSshStream : TMuxStream {
 								    {
 									    return session.auth_password (username, (!)password);
 								    }, busy_dialog.cancellable)) {
-				  case SSH2.Error.NONE :
+				  case SSH2.Error.NONE:
 					  message ("%s@%s:%d:%s: Password succeeded.", username, host, port, session_name);
 					  break;
 
-				  case SSH2.Error.AUTHENTICATION_FAILED :
+				  case SSH2.Error.AUTHENTICATION_FAILED:
 					  message ("%s@%s:%d:%s: Password failed.", username, host, port, session_name);
 					  break;
 
-				  default :
+				  default:
 					  throw_session_error<bool> (session);
 					  break;
 				 }
 				 break;
 
-			 default :
+			 default:
 				 message ("%s@%s:%d:%s: Skipping unknown authentication method: %s", username, host, port, session_name, method);
 				 break;
 			}
@@ -308,6 +362,30 @@ internal class TabbedMux.TMuxSshStream : TMuxStream {
 		char[] error_message;
 		session.get_last_error (out error_message);
 		throw new IOError.INVALID_DATA ((string) error_message);
+	}
+	private static bool run_host_key_dialog<T> (Gtk.Dialog dialog, string message, SSH2.Session<T> session, string host, uint16 port) {
+		dialog.resizable = false;
+		var buffer = new StringBuilder ();
+		buffer.append (message);
+		buffer.append_printf ("\nThe host %s:%hu has the key ", host, port);
+		unowned uint8[] hash = session.get_host_key_hash (SSH2.HashType.SHA1);
+		for (var it = 0; it < hash.length; it++) {
+			if (it > 0) {
+				buffer.append_c (':');
+			}
+			buffer.append_printf ("%2x", hash[it]);
+		}
+		buffer.append (". Proceed anyway?");
+		var label  = new Gtk.Label (buffer.str);
+		label.set_line_wrap (true);
+		dialog.border_width = 5;
+		dialog.get_content_area ().pack_start (label, false, false);
+		dialog.get_content_area ().border_width = 10;
+		dialog.get_content_area ().spacing = 14;
+		dialog.get_content_area ().show_all ();
+		var result = dialog.run () != Gtk.ButtonsType.CANCEL;
+		dialog.destroy ();
+		return result;
 	}
 }
 namespace TabbedMux {
