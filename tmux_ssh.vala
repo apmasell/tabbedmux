@@ -119,7 +119,7 @@ internal class TabbedMux.TMuxSshStream : TMuxStream {
 	/**
 	 * Perform public key authentication using all the SSH keys in the agent and the file in the user's home directory.
 	 */
-	private static async bool do_public_key_auth<T> (Socket socket, SSH2.Session session, string username, string host, uint16 port, Cancellable cancellable) {
+	private static async bool do_public_key_auth<T> (Socket socket, SSH2.Session session, string username, string host, uint16 port, Cancellable cancellable, InteractiveAuthentication get_password) {
 		var agent = session.create_agent ();
 		if (agent != null && (yield ssh_wait_glue<T> (session, socket, () => ((!)agent).connect (), cancellable)) == SSH2.Error.NONE && (yield ssh_wait_glue<T> (session, socket, () => ((!)agent).list_identities (), cancellable)) == SSH2.Error.NONE) {
 			unowned SSH2.AgentKey? key = null;
@@ -136,13 +136,20 @@ internal class TabbedMux.TMuxSshStream : TMuxStream {
 			session.get_last_error (out error_message);
 			warning ("Failed to communicate with ssh-agent: %s", (string) error_message);
 		}
-		return (yield ssh_wait_glue<T> (session, socket, () => session.auth_publickey_from_file (username, @"$(Environment.get_home_dir())/.ssh/id_rsa.pub", @"$(Environment.get_home_dir())/.ssh/id_rsa", null), cancellable)) == SSH2.Error.NONE;
+		var attempts = 0;
+		string password = null;
+		SSH2.Error result;
+		while ((result = yield ssh_wait_glue<T> (session, socket, () => session.auth_publickey_from_file (username, @"$(Environment.get_home_dir())/.ssh/id_rsa.pub", @"$(Environment.get_home_dir())/.ssh/id_rsa", null), cancellable)) == SSH2.Error.PUBLICKEY_UNVERIFIED && attempts <= 3 && get_password != null) {
+			password = password_simple ("Unlock private key:", (!)get_password);
+			attempts++;
+		}
+		return result == SSH2.Error.NONE;
 	}
 
 	/* see password_adapter.c */
-	public delegate void InteractiveAuthentication (string username, string instruction, SSH2.keyboard_prompt[] prompts, SSH2.keyboard_response[] responses);
+	public delegate void InteractiveAuthentication (string instruction, SSH2.keyboard_prompt[] prompts, SSH2.keyboard_response[] responses);
 	private static extern SSH2.Error password_adapter (SSH2.Session session, string username, InteractiveAuthentication handler);
-	private static extern string? password_simple (string username, InteractiveAuthentication handler);
+	private static extern string? password_simple (string banner, InteractiveAuthentication handler);
 
 	/**
 	 * Attempt to open an SSH connection and talk to TMux on that host.
@@ -190,7 +197,7 @@ internal class TabbedMux.TMuxSshStream : TMuxStream {
 			switch (method) {
 			 case "publickey" :
 				 busy_dialog.message = @"Trying public key authentication for '$(session_name) on $(username)@$(host):$(port)...";
-				 yield do_public_key_auth<bool> (connection.socket, session, username, host, port, busy_dialog.cancellable);
+				 yield do_public_key_auth<bool> (connection.socket, session, username, host, port, busy_dialog.cancellable, get_password);
 				 break;
 
 			 case "keyboard-interactive" :
@@ -214,7 +221,7 @@ internal class TabbedMux.TMuxSshStream : TMuxStream {
 					 break;
 				 }
 				 busy_dialog.message = @"Trying password authentication for '$(session_name) on $(username)@$(host):$(port)...";
-				 var password = password_simple (username, (!)get_password);
+				 var password = password_simple ("Enter password:", (!)get_password);
 				 if (password == null) {
 					 break;
 				 }

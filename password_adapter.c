@@ -4,7 +4,6 @@
 
 typedef void (
 	*TabbedMuxTMuxSshStreamInteractiveAuthentication) (
-	const gchar *username,
 	const gchar *instruction,
 	const LIBSSH2_USERAUTH_KBDINT_PROMPT * prompts,
 	int prompts_length,
@@ -31,7 +30,7 @@ void response_callback(
 	struct delegate_data *data = *abstract;
 
 	*abstract = data->original_abstract;
-	data->handler(name, instruction, prompts, num_prompts, responses, num_prompts, data->handler_target);
+	data->handler(instruction, prompts, num_prompts, responses, num_prompts, data->handler_target);
 	*abstract = data;
 }
 
@@ -63,7 +62,7 @@ int tabbed_mux_tmux_ssh_stream_password_adapter(
  * Since we've already got a thing for keyboard interactive, make simple passwords just call the keyboard interactive handler.
  */
 gchar *tabbed_mux_tmux_ssh_stream_password_simple(
-	const gchar *username,
+	const gchar *banner,
 	TabbedMuxTMuxSshStreamInteractiveAuthentication handler,
 	void *handler_target) {
 
@@ -76,7 +75,7 @@ gchar *tabbed_mux_tmux_ssh_stream_password_simple(
 	response.text = NULL;
 	response.length = 0;
 
-	handler(username, "Enter password.", &prompt, 1, &response, 1, handler_target);
+	handler(banner, &prompt, 1, &response, 1, handler_target);
 
 	return response.text;
 }

@@ -9,7 +9,7 @@ public class KeyboardInteractiveDialog : Gtk.Dialog {
 		ok_button.can_default = true;
 		ok_button.grab_default ();
 	}
-	public void respond (string username, string instruction, SSH2.keyboard_prompt[] prompts, SSH2.keyboard_response[] responses) {
+	public void respond (string instruction, SSH2.keyboard_prompt[] prompts, SSH2.keyboard_response[] responses) {
 		var entries = new Gtk.Entry[] {};
 		var box = get_content_area ();
 		var grid = new Gtk.Grid ();
