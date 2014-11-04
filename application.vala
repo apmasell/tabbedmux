@@ -55,7 +55,16 @@ public class TabbedMux.Application : Gtk.Application {
 	private void on_window_created (TMuxWindow tmux_window) {
 		var window = (active_window as Window);
 		if (window == null) {
-			critical ("Unknown window type active.");
+			foreach (var possible_window in get_windows ()) {
+				window = (possible_window as Window);
+				if (window != null) {
+					break;
+				}
+			}
+		}
+		if (window == null) {
+			critical ("Can't find a Gtk+ window to hold the TMux window.");
+			return;
 		}
 		((!)window).add_window (tmux_window);
 	}
