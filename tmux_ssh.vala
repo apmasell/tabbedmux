@@ -193,24 +193,19 @@ internal class TabbedMux.TMuxSshStream : TMuxStream {
 				  break;
 
 			  case SSH2.CheckResult.MISMATCH :
-				  var mismatch_dialog = new Gtk.Dialog.with_buttons ("SSH Host Key - TabbedMux", busy_dialog, Gtk.DialogFlags.MODAL, "Proceed Anyway", Gtk.ButtonsType.OK, "Stop Immediately", Gtk.ButtonsType.CANCEL);
-				  if (!run_host_key_dialog<bool> (mismatch_dialog, "KEY MISTMATCH!!! POSSIBLE ATTACK!!!", session, host, port)) {
+				  if (!run_host_key_dialog<bool> (busy_dialog, "KEY MISTMATCH!!! POSSIBLE ATTACK!!!", "Proceed Anyway", "Stop Immediately", session, host, port, null)) {
 					  return null;
 				  }
-				  mismatch_dialog.destroy ();
 				  break;
 
 			  case SSH2.CheckResult.NOTFOUND :
-				  //TODO allow add
-				  var unknown_dialog = new Gtk.Dialog.with_buttons ("SSH Host Key - TabbedMux", busy_dialog, Gtk.DialogFlags.MODAL, "Accept Once", Gtk.ButtonsType.OK, "Cancel", Gtk.ButtonsType.CANCEL);
-				  if (!run_host_key_dialog<bool> (unknown_dialog, "Unknown host.", session, host, port)) {
+				  if (!run_host_key_dialog<bool> (busy_dialog, "Unknown host.", "Accept Once", "Cancel", session, host, port, known_hosts)) {
 					  return null;
 				  }
 				  break;
 
 			  case SSH2.CheckResult.FAILURE :
-				  var fail_dialog = new Gtk.Dialog.with_buttons ("SSH Host Key - TabbedMux", busy_dialog, Gtk.DialogFlags.MODAL, "Accept Once", Gtk.ButtonsType.OK, "Cancel", Gtk.ButtonsType.CANCEL);
-				  if (!run_host_key_dialog<bool> (fail_dialog, "Failed to check for public key.", session, host, port)) {
+				  if (!run_host_key_dialog<bool> (busy_dialog, "Failed to check for public key.", "Accept Once", "Cancel", session, host, port, null)) {
 					  return null;
 				  }
 				  break;
@@ -220,9 +215,7 @@ internal class TabbedMux.TMuxSshStream : TMuxStream {
 		 case SSH2.Error.FILE :
 		 case SSH2.Error.METHOD_NOT_SUPPORTED :
 		 case SSH2.Error.KNOWN_HOSTS :
-			 //TODO allow add
-			 var no_file_dialog = new Gtk.Dialog.with_buttons ("SSH Host Key - TabbedMux", busy_dialog, Gtk.DialogFlags.MODAL, "Accept Once", Gtk.ButtonsType.OK, "Cancel", Gtk.ButtonsType.CANCEL);
-			 if (!run_host_key_dialog<bool> (no_file_dialog, "No database of known hosts.", session, host, port)) {
+			 if (!run_host_key_dialog<bool> (busy_dialog, "No database of known hosts.", "Accept Once", "Cancel", session, host, port, known_hosts)) {
 				 return null;
 			 }
 			 break;
@@ -361,7 +354,13 @@ internal class TabbedMux.TMuxSshStream : TMuxStream {
 		session.get_last_error (out error_message);
 		throw new IOError.INVALID_DATA ((string) error_message);
 	}
-	private static bool run_host_key_dialog<T> (Gtk.Dialog dialog, string message, SSH2.Session<T> session, string host, uint16 port) {
+	private static bool run_host_key_dialog<T> (Gtk.Window parent, string message, string yes, string no, SSH2.Session<T> session, string host, uint16 port, SSH2.KnownHosts? known_hosts) {
+		 Gtk.Dialog dialog;
+		 if (known_hosts == null) {
+			 dialog = new Gtk.Dialog.with_buttons ("SSH Host Key - TabbedMux", parent, Gtk.DialogFlags.MODAL, yes, Gtk.ResponseType.OK, no, Gtk.ResponseType.CANCEL);
+		 } else {
+			 dialog = new Gtk.Dialog.with_buttons ("SSH Host Key - TabbedMux", parent, Gtk.DialogFlags.MODAL, yes, Gtk.ResponseType.OK, "Store Permanently", Gtk.ResponseType.YES, no, Gtk.ResponseType.CANCEL);
+		 }
 		dialog.resizable = false;
 		var buffer = new StringBuilder ();
 		buffer.append (message);
@@ -381,7 +380,23 @@ internal class TabbedMux.TMuxSshStream : TMuxStream {
 		dialog.get_content_area ().border_width = 10;
 		dialog.get_content_area ().spacing = 14;
 		dialog.get_content_area ().show_all ();
-		var result = dialog.run () != Gtk.ButtonsType.CANCEL;
+		bool result;
+		switch (dialog.run ()) {
+			case Gtk.ResponseType.CANCEL:
+				result = false;
+				break;
+			case Gtk.ResponseType.YES:
+				SSH2.KeyType key_type;
+				unowned uint8[] key = session.get_host_key (out key_type);
+				if (known_hosts.addc(@"[$(host)]:$(port)", null, key, null, SSH2.HostFormat.TYPE_PLAIN | SSH2.HostFormat.KEYENC_RAW | key_type.get_format (), null) != SSH2.Error.NONE || known_hosts.write_file(@"$(Environment.get_home_dir ())/.ssh/known_hosts_tabbed_mux") != SSH2.Error.NONE ) {
+					warning("Failed to add key for %s:%hu.", host, port);
+				}
+				result = true;
+				break;
+			default:
+				result = true;
+				break;
+		}
 		dialog.destroy ();
 		return result;
 	}
