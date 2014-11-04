@@ -182,7 +182,8 @@ internal class TabbedMux.TMuxSshStream : TMuxStream {
 		if (known_hosts == null) {
 			throw_session_error<bool> (session);
 		}
-		switch (known_hosts.read_file (@"$(Environment.get_home_dir ())/.ssh/known_hosts")) {
+		var num_records = known_hosts.read_file (@"$(Environment.get_home_dir ())/.ssh/known_hosts_tabbed_mux");
+		switch (num_records > 0 ? SSH2.Error.NONE : (SSH2.Error) num_records) {
 		 case SSH2.Error.NONE :
 			 SSH2.KeyType type;
 			 var key = session.get_host_key (out type);
