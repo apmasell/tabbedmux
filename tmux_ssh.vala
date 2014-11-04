@@ -183,7 +183,7 @@ internal class TabbedMux.TMuxSshStream : TMuxStream {
 			throw_session_error<bool> (session);
 		}
 		var num_records = known_hosts.read_file (@"$(Environment.get_home_dir ())/.ssh/known_hosts_tabbed_mux");
-		switch (num_records > 0 ? SSH2.Error.NONE : (SSH2.Error) num_records) {
+		switch (num_records > 0 ? SSH2.Error.NONE : (SSH2.Error)num_records) {
 		 case SSH2.Error.NONE :
 			 SSH2.KeyType type;
 			 var key = session.get_host_key (out type);
@@ -355,12 +355,12 @@ internal class TabbedMux.TMuxSshStream : TMuxStream {
 		throw new IOError.INVALID_DATA ((string) error_message);
 	}
 	private static bool run_host_key_dialog<T> (Gtk.Window parent, string message, string yes, string no, SSH2.Session<T> session, string host, uint16 port, SSH2.KnownHosts? known_hosts) {
-		 Gtk.Dialog dialog;
-		 if (known_hosts == null) {
-			 dialog = new Gtk.Dialog.with_buttons ("SSH Host Key - TabbedMux", parent, Gtk.DialogFlags.MODAL, yes, Gtk.ResponseType.OK, no, Gtk.ResponseType.CANCEL);
-		 } else {
-			 dialog = new Gtk.Dialog.with_buttons ("SSH Host Key - TabbedMux", parent, Gtk.DialogFlags.MODAL, yes, Gtk.ResponseType.OK, "Store Permanently", Gtk.ResponseType.YES, no, Gtk.ResponseType.CANCEL);
-		 }
+		Gtk.Dialog dialog;
+		if (known_hosts == null) {
+			dialog = new Gtk.Dialog.with_buttons ("SSH Host Key - TabbedMux", parent, Gtk.DialogFlags.MODAL, yes, Gtk.ResponseType.OK, no, Gtk.ResponseType.CANCEL);
+		} else {
+			dialog = new Gtk.Dialog.with_buttons ("SSH Host Key - TabbedMux", parent, Gtk.DialogFlags.MODAL, yes, Gtk.ResponseType.OK, "Store Permanently", Gtk.ResponseType.YES, no, Gtk.ResponseType.CANCEL);
+		}
 		dialog.resizable = false;
 		var buffer = new StringBuilder ();
 		buffer.append (message);
@@ -382,20 +382,22 @@ internal class TabbedMux.TMuxSshStream : TMuxStream {
 		dialog.get_content_area ().show_all ();
 		bool result;
 		switch (dialog.run ()) {
-			case Gtk.ResponseType.CANCEL:
-				result = false;
-				break;
-			case Gtk.ResponseType.YES:
-				SSH2.KeyType key_type;
-				unowned uint8[] key = session.get_host_key (out key_type);
-				if (known_hosts.addc(@"[$(host)]:$(port)", null, key, null, SSH2.HostFormat.TYPE_PLAIN | SSH2.HostFormat.KEYENC_RAW | key_type.get_format (), null) != SSH2.Error.NONE || known_hosts.write_file(@"$(Environment.get_home_dir ())/.ssh/known_hosts_tabbed_mux") != SSH2.Error.NONE ) {
-					warning("Failed to add key for %s:%hu.", host, port);
-				}
-				result = true;
-				break;
-			default:
-				result = true;
-				break;
+		 case Gtk.ResponseType.CANCEL :
+			 result = false;
+			 break;
+
+		 case Gtk.ResponseType.YES :
+			 SSH2.KeyType key_type;
+			 unowned uint8[] key = session.get_host_key (out key_type);
+			 if (known_hosts.addc (@"[$(host)]:$(port)", null, key, null, SSH2.HostFormat.TYPE_PLAIN | SSH2.HostFormat.KEYENC_RAW | key_type.get_format (), null) != SSH2.Error.NONE || known_hosts.write_file (@"$(Environment.get_home_dir ())/.ssh/known_hosts_tabbed_mux") != SSH2.Error.NONE) {
+				 warning ("Failed to add key for %s:%hu.", host, port);
+			 }
+			 result = true;
+			 break;
+
+		 default :
+			 result = true;
+			 break;
 		}
 		dialog.destroy ();
 		return result;
