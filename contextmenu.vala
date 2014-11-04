@@ -19,8 +19,9 @@ class TabbedMux.ContextMenu : Gtk.Menu {
 			AppInfo.launch_default_for_uri (url, null);
 		} catch (Error e) {
 			var dialog = new Gtk.MessageDialog (get_toplevel () as Gtk.Window, Gtk.DialogFlags.MODAL, Gtk.MessageType.ERROR, Gtk.ButtonsType.OK, "%s", e.message);
-			dialog.run ();
-			dialog.destroy ();
+			unowned Gtk.Widget unowned_this = dialog;
+			dialog.response.connect (() => unowned_this.destroy ());
+			dialog.show ();
 		}
 	}
 	private void copy () {

@@ -62,15 +62,13 @@ int tabbed_mux_tmux_ssh_stream_password_adapter(
 /*
  * Since we've already got a thing for keyboard interactive, make simple passwords just call the keyboard interactive handler.
  */
-int tabbed_mux_tmux_ssh_stream_password_simple(
-	LIBSSH2_SESSION * session,
+gchar *tabbed_mux_tmux_ssh_stream_password_simple(
 	const gchar *username,
 	TabbedMuxTMuxSshStreamInteractiveAuthentication handler,
 	void *handler_target) {
 
 	LIBSSH2_USERAUTH_KBDINT_PROMPT prompt;
 	LIBSSH2_USERAUTH_KBDINT_RESPONSE response;
-	int result;
 
 	prompt.text = "Password:";
 	prompt.length = strlen(prompt.text);
@@ -80,7 +78,5 @@ int tabbed_mux_tmux_ssh_stream_password_simple(
 
 	handler(username, "Enter password.", &prompt, 1, &response, 1, handler_target);
 
-	result = libssh2_userauth_password(session, username, response.text == NULL ? "" : response.text);
-	g_free(response.text);
-	return result;
+	return response.text;
 }

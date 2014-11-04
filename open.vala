@@ -44,8 +44,6 @@ public class TabbedMux.OpenDialog : Gtk.Dialog {
 	[GtkCallback]
 	private void on_connect () {
 		try {
-			TMuxStream? stream;
-
 			/* Validate fields common to SSH and local. */
 			var session_name = strip (session.text);
 			if (":" in session_name) {
@@ -88,31 +86,69 @@ public class TabbedMux.OpenDialog : Gtk.Dialog {
 
 				/* Create a handler for the password/prompts. */
 				var keybd_dialog = new KeyboardInteractiveDialog (this, host.text);
-				stream = TMuxSshStream.open (session_name, host.text, (uint16) port_number, username, tmux_binary, keybd_dialog.respond);
+				var busy_dialog = new BusyDialog (this);
+				busy_dialog.show ();
+				TMuxSshStream.open.begin (session_name, host.text, (uint16) port_number, username, tmux_binary, keybd_dialog.respond, busy_dialog, (sender, result) => {
+								  try {
+									  var stream = TMuxSshStream.open.end (result);
 
-				/* Save if desired */
-				if (stream != null && save.active && application is Application) {
-					((Application) application).saved_sessions.append_ssh (session_name, host.text, (uint16) port_number, username, tmux_binary);
-				}
+				                                          /* Save if desired */
+									  if (stream != null && save.active && application is Application) {
+										  ((Application) application).saved_sessions.append_ssh (session_name, host.text, (uint16) port_number, username, tmux_binary);
+									  }
+									  deal_with_stream (stream);
+								  } catch (Error e) {
+									  message ("Catch");
+									  show_error (this, e.message);
+									  message ("Showed");
+								  }
+								  message ("Kill busy");
+								  busy_dialog.destroy ();
+							  });
 			} else {
 				/* Local. Don't validate SSH fields. */
 
-				stream = TMuxLocalStream.open (session_name, tmux_binary);
+				var stream = TMuxLocalStream.open (session_name, tmux_binary);
 
 				/* Save if desired */
 				if (stream != null && save.active && application is Application) {
 					((Application) application).saved_sessions.append_local (session_name, tmux_binary);
 				}
-			}
-			/* Deal with the connection attempt. */
-			if (stream == null) {
-				show_error (this, "Could not connect.");
-			} else {
-				((Application) application).add_stream ((!)stream);
-				success = true;
+				deal_with_stream (stream);
 			}
 		} catch (Error e) {
 			show_error (this, e.message);
 		}
+	}
+	/* Deal with the connection attempt. */
+	void deal_with_stream (TMuxStream? stream) {
+		if (stream == null) {
+			show_error (this, "Could not connect.");
+		} else {
+			((Application) application).add_stream ((!)stream);
+			success = true;
+			destroy ();
+		}
+	}
+}
+[GtkTemplate (ui = "/name/masella/tabbedmux/busy.ui")]
+public class TabbedMux.BusyDialog : Gtk.Dialog {
+	[GtkChild]
+	private Gtk.Label text;
+	public string message {
+		set {
+			text.label = value;
+		}
+	}
+	public Cancellable cancellable {
+		get; private set;
+	}
+	public BusyDialog (Gtk.Window parent) {
+		Object (application : parent.application, transient_for: parent);
+		cancellable = new Cancellable ();
+	}
+	[GtkCallback]
+	private void on_cancel () {
+		cancellable.cancel ();
 	}
 }

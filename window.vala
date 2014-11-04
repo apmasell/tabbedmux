@@ -148,7 +148,7 @@ public class TabbedMux.Window : Gtk.ApplicationWindow {
 			close.clicked.connect (unowned_this.destroy_window);
 		}
 		var timeout = new TimeoutSource (500);
-		timeout.set_callback (unowned_this.force_size_update);
+		timeout.set_callback ((SourceFunc) unowned_this.force_size_update);
 		timeout.attach (MainContext.default ());
 	}
 
@@ -208,8 +208,7 @@ public class TabbedMux.Window : Gtk.ApplicationWindow {
 	[GtkCallback]
 	private void add_stream () {
 		var open_dialog = new OpenDialog (this);
-		while (open_dialog.run () == 0 && !open_dialog.success) {}
-		open_dialog.destroy ();
+		open_dialog.show ();
 	}
 
 	/**
@@ -602,26 +601,28 @@ public class TabbedMux.Window : Gtk.ApplicationWindow {
 		return false;
 	}
 	public abstract class SessionItem : Gtk.MenuItem {
-		protected abstract TMuxStream? open () throws Error;
+		protected async abstract TMuxStream? open () throws Error;
 		public abstract bool matches (TMuxStream stream);
 		public override void activate () {
-			var window = (Gtk.Window)get_toplevel ();
+			var window = (Gtk.Window)get_ancestor (typeof (Gtk.Window));
 			while (window.attached_to != null) {
-				window = (Gtk.Window)window.attached_to.get_toplevel ();
+				window = (Gtk.Window)window.attached_to.get_ancestor (typeof (Gtk.Window));
 			}
-			try {
-				var stream = open ();
-				if (stream == null) {
-					show_error (window, "Could not connect.");
-				} else {
-					var application =  window.application as Application;
-					if (application != null) {
-						((!)application).add_stream ((!)stream);
-					}
-				}
-			} catch (Error e) {
-				show_error (window, e.message);
-			}
+			open.begin ((sender, result) => {
+					    try {
+						    var stream = open.end (result);
+						    if (stream == null) {
+							    show_error (window, "Could not connect.");
+						    } else {
+							    var application =  window.application as Application;
+							    if (application != null) {
+								    ((!)application).add_stream ((!)stream);
+							    }
+						    }
+					    } catch (Error e) {
+						    show_error (window, e.message);
+					    }
+				    });
 		}
 	}
 	private class LocalSessionItem : SessionItem {
@@ -635,7 +636,7 @@ public class TabbedMux.Window : Gtk.ApplicationWindow {
 		public override bool matches (TMuxStream stream) {
 			return stream is TMuxLocalStream && stream.session_name == session && stream.binary == binary;
 		}
-		protected override TMuxStream? open () throws Error {
+		protected async override TMuxStream? open () throws Error {
 			return TMuxLocalStream.open (session, binary);
 		}
 	}
@@ -660,9 +661,17 @@ public class TabbedMux.Window : Gtk.ApplicationWindow {
 			}
 			return false;
 		}
-		protected override TMuxStream? open () throws Error {
+		protected async override TMuxStream? open () throws Error {
 			var keybd_dialog = new KeyboardInteractiveDialog ((Gtk.Window)get_toplevel (), host);
-			return TMuxSshStream.open (session, host, port, username, binary, keybd_dialog.respond);
+			var busy_dialog = new BusyDialog ((Gtk.Window)get_toplevel ());
+			busy_dialog.show ();
+			try {
+				var stream = yield TMuxSshStream.open (session, host, port, username, binary, keybd_dialog.respond, busy_dialog);
+				busy_dialog.destroy ();
+				return stream;
+			} finally {
+				busy_dialog.destroy ();
+			}
 		}
 	}
 	public abstract class RemoveSessionItem : Gtk.MenuItem {
