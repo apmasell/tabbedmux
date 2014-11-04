@@ -280,10 +280,7 @@ internal class TabbedMux.TMuxSshStream : TMuxStream {
 				 if (password == null) {
 					 break;
 				 }
-				 switch (yield ssh_wait_glue<bool> (session, connection.socket, () =>
-								    {
-									    return session.auth_password (username, (!)password);
-								    }, busy_dialog.cancellable)) {
+				 switch (yield ssh_wait_glue<bool> (session, connection.socket, () => session.auth_password (username, (!)password), busy_dialog.cancellable)) {
 				  case SSH2.Error.NONE:
 					  message ("%s@%s:%d:%s: Password succeeded.", username, host, port, session_name);
 					  break;
