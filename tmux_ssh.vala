@@ -187,7 +187,7 @@ internal class TabbedMux.TMuxSshStream : TMuxStream {
 			 SSH2.KeyType type;
 			 var key = session.get_host_key (out type);
 			 unowned SSH2.Host? known;
-			 switch (known_hosts.check (@"[$(host)]:$(port)", key,  SSH2.HostFormat.TYPE_PLAIN | SSH2.HostFormat.KEYENC_RAW, out known)) {
+			 switch (known_hosts.checkp (host, port, key,  SSH2.HostFormat.TYPE_PLAIN | SSH2.HostFormat.KEYENC_RAW, out known)) {
 			  case SSH2.CheckResult.MATCH :
 				  break;
 
