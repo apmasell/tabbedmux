@@ -2,8 +2,7 @@
  * Access a TMux session via libssh2.
  */
 internal class TabbedMux.TMuxSshStream : TMuxStream {
-	Socket socket;
-	SSH2.Session session;
+	AsyncImpedanceMatcher matcher;
 	SSH2.Channel channel;
 	StringBuilder buffer = new StringBuilder ();
 
@@ -17,11 +16,10 @@ internal class TabbedMux.TMuxSshStream : TMuxStream {
 		get; private set;
 	}
 
-	internal TMuxSshStream (string session_name, string host, uint16 port, string username, string binary, Socket socket, owned SSH2.Session session, owned SSH2.Channel channel) {
+	internal TMuxSshStream (string session_name, string host, uint16 port, string username, string binary, AsyncImpedanceMatcher matcher, owned SSH2.Channel channel) {
 		base (port == 22 ? @"$(username)@$(host) $(binary)" : @"$(username)@$(host):$(port) $(binary)", session_name, binary);
-		this.session = (owned) session;
+		this.matcher = matcher;
 		this.channel = (owned) channel;
-		this.socket = socket;
 		this.host = host;
 		this.port = port;
 		this.username = username;
@@ -29,9 +27,8 @@ internal class TabbedMux.TMuxSshStream : TMuxStream {
 
 	~TMuxSshStream () {
 		/* To make libssh happy, the channel must be destroyed before the session, synchronously. */
-		session.blocking = true;
+		matcher.session.blocking = true;
 		channel = null;
-		session = null;
 	}
 
 	/**
@@ -42,38 +39,15 @@ internal class TabbedMux.TMuxSshStream : TMuxStream {
 		if (cancellable.is_cancelled ()) {
 			return null;
 		}
+		matcher.cancellable = cancellable;
+
 		uint8 data[1024];
 		int new_line;
 		/* Read and append to a StringBuilder until we have a line. */
 		while ((new_line = search_buffer (buffer)) < 0) {
+			var length = yield matcher.invoke_ssize_t ((s, c) => c.read (data), channel);
+			buffer.append_len ((string) data, length);
 
-			/* Perform an obligatory SSH keep-alive.  */
-			int seconds_to_next;
-			if (session.send_keep_alive (out seconds_to_next) != SSH2.Error.NONE) {
-				return throw_channel_error (true);
-			}
-			ssize_t result = 0;
-			var err = yield ssh_wait_glue<bool> (session, socket, () => { result = channel.read (data); return result > 0 ? SSH2.Error.NONE : (SSH2.Error)result; }, cancellable, seconds_to_next);
-			if (cancellable.is_cancelled ()) {
-				return null;
-			}
-
-			switch (err) {
-			 case SSH2.Error.NONE :
-				 /* Stuff any data into our buffer. */
-				 buffer.append_len ((string) data, result);
-				 break;
-
-			 case SSH2.Error.SOCKET_RECV:
-				 /* Some error in the underlying socket. */
-				 int no = errno;
-				 critical ("%s:%s: %s", name, session_name, strerror (no));
-				 throw_errno (no);
-
-			 default:
-				 /* Some other SSH error to complain about. */
-				 return throw_channel_error (result < 0);
-			}
 		}
 		/* Take the whole line from the buffer and return it. */
 		var str = buffer.str[0 : new_line];
@@ -81,37 +55,14 @@ internal class TabbedMux.TMuxSshStream : TMuxStream {
 		return str;
 	}
 
-	private string? throw_channel_error (bool check_message = false) throws IOError {
-		char[]? error_message = null;
-		if (check_message) {
-			session.get_last_error (out error_message);
-			critical ("%s:%s: %s", name, session_name, (string) error_message);
-		}
-		if (channel.eof () != 0 && channel.wait_closed () != SSH2.Error.NONE) {
-			throw new IOError.CLOSED (@"Unable to close channel.");
-		}
-		if (error_message != null) {
-			throw new IOError.FAILED ((string) error_message);
-		}
-		if (channel.exit_status > 0) {
-			throw new IOError.CLOSED (@"Remote TMux terminated with $(channel.exit_status).");
-		}
-		char[]? signal_name;
-		char[]? language_tag;
-		if (channel.get_exit_signal (out signal_name, out error_message, out language_tag) == SSH2.Error.NONE && signal_name != null) {
-			throw new IOError.CLOSED (@"Remote TMux caught signal $((string) signal_name).");
-		}
-		return null;
-	}
-
 	protected override void write (uint8[] data) throws IOError {
 		/* To make life remote sane, writes are blocking while reads are non-blocking. In theory, we shouldn't block in the Gtk+ thread, but we write sufficiently little data that the writes complete immediately and this simplifies the code. */
-		session.blocking = true;
+		matcher.session.blocking = true;
 		var result = channel.write (data);
-		session.blocking = false;
+		matcher.session.blocking = false;
 		if (result != data.length) {
 			char[] error_message;
-			session.get_last_error (out error_message);
+			matcher.session.get_last_error (out error_message);
 			critical ("%s:%s: %s", name, session_name, (string) error_message);
 			throw new IOError.FAILED ((string) error_message);
 		}
@@ -120,31 +71,35 @@ internal class TabbedMux.TMuxSshStream : TMuxStream {
 	/**
 	 * Perform public key authentication using all the SSH keys in the agent and the file in the user's home directory.
 	 */
-	private static async bool do_public_key_auth<T> (Socket socket, SSH2.Session session, string username, string host, uint16 port, Cancellable cancellable, InteractiveAuthentication get_password) {
-		var agent = session.create_agent ();
-		if (agent != null && (yield ssh_wait_glue<T> (session, socket, () => ((!)agent).connect (), cancellable)) == SSH2.Error.NONE && (yield ssh_wait_glue<T> (session, socket, () => ((!)agent).list_identities (), cancellable)) == SSH2.Error.NONE) {
+	private static async void do_public_key_auth (AsyncImpedanceMatcher matcher, string username, string host, uint16 port, InteractiveAuthentication get_password) throws IOError {
+		try {
+			SSH2.Agent? agent = null;
+			yield matcher.invoke_obj<unowned SSH2.Agent> ((s, c) => agent = s.create_agent ());
+			yield matcher.invoke ((s, c) => ((!)agent).connect ());
+			yield matcher.invoke ((s, c) => ((!)agent).list_identities ());
 			unowned SSH2.AgentKey? key = null;
 			while (((!)agent).next (out key, key) == SSH2.Error.NONE) {
-				if ((yield ssh_wait_glue<T> (session, socket, () => ((!)agent).user_auth (username, (!)key), cancellable)) == SSH2.Error.NONE) {
+				try {
+					yield matcher.invoke ((s, c) => ((!)agent).user_auth (username, (!)key));
 					message ("Authentication succeeded for %s@%s:%hu with public key %s.", username, host, port, ((!)key).comment ?? "unknown");
-					return true;
-				} else {
-					message ("Authentication failed for %s@%s:%hu with public key %s.", username, host, port, ((!)key).comment ?? "unknown");
+					return;
+				} catch (IOError e) {
+				message ("Authentication failed for %s@%s:%hu with public key %s: %s", username, host, port, ((!)key).comment ?? "unknown", e.message);
 				}
 			}
-		} else {
-			char[] error_message;
-			session.get_last_error (out error_message);
-			warning ("Failed to communicate with ssh-agent: %s", (string) error_message);
+		} catch (IOError e) {
+			warning ("Failed to communicate with agent: %s", e.message);
 		}
+
 		var attempts = 0;
-		string password = null;
-		SSH2.Error result;
-		while ((result = yield ssh_wait_glue<T> (session, socket, () => session.auth_publickey_from_file (username, @"$(Environment.get_home_dir())/.ssh/id_rsa.pub", @"$(Environment.get_home_dir())/.ssh/id_rsa", null), cancellable)) == SSH2.Error.PUBLICKEY_UNVERIFIED && attempts <= 3 && get_password != null) {
+		string? password = null;
+		var public_key = @"$(Environment.get_home_dir())/.ssh/id_rsa.pub";
+		var private_key = @"$(Environment.get_home_dir())/.ssh/id_rsa";
+		while ((yield matcher.invoke ((s, c) => s.auth_publickey_from_file (username, public_key, private_key, password), null, SSH2.Error.PUBLICKEY_UNVERIFIED)) && attempts <= 3 && get_password != null) {
 			password = password_simple ("Unlock private key:", (!)get_password);
 			attempts++;
 		}
-		return result == SSH2.Error.NONE;
+		return;
 	}
 
 	/* see password_adapter.c */
@@ -156,10 +111,6 @@ internal class TabbedMux.TMuxSshStream : TMuxStream {
 	 * Attempt to open an SSH connection and talk to TMux on that host.
 	 */
 	public async static TMuxStream? open (string session_name, string host, uint16 port, string username, string binary, InteractiveAuthentication? get_password, BusyDialog busy_dialog) throws Error {
-		var session = SSH2.Session.create<bool> ();
-
-		session.set_disconnect_handler ((session, reason, msg, language, ref user_data) => message ("Disconnect: %s", (string) msg));
-
 		/*
 		 * Create a GIO socket for that host. We do this so we can use async methods on it.
 		 */
@@ -167,86 +118,63 @@ internal class TabbedMux.TMuxSshStream : TMuxStream {
 		var client = new SocketClient ();
 		var connection = yield client.connect_to_host_async (host, port);
 
+		var matcher = new AsyncImpedanceMatcher (connection.socket);
+		matcher.cancellable = busy_dialog.cancellable;
 		/*
 		 * Tell libssh2 to do the handshake.
 		 */
 		busy_dialog.message = @"Handshaking '$(session_name)' on $(username)@$(host):$(port)...";
-		if ((yield ssh_wait_glue<bool> (session, connection.socket, () => session.handshake (connection.socket.fd), busy_dialog.cancellable)) != SSH2.Error.NONE) {
-			char[] error_message;
-			session.get_last_error (out error_message);
-			throw new IOError.INVALID_DATA ((string) error_message);
-		}
+		yield matcher.invoke ((s, c) => s.handshake (connection.socket.fd));
 
 		/* List the know hosts */
-		var known_hosts = session.get_known_hosts ();
-		if (known_hosts == null) {
-			throw_session_error<bool> (session);
+		SSH2.KnownHosts? known_hosts = null;
+		yield matcher.invoke_obj<unowned SSH2.KnownHosts> ((s, c) => known_hosts = s.get_known_hosts ());
+
+		var good_key = false;
+		try {
+			yield matcher.invoke_ssize_t ((s, c) => known_hosts.read_file (@"$(Environment.get_home_dir ())/.ssh/known_hosts_tabbed_mux"));
+		 SSH2.KeyType type;
+		 var key = matcher.session.get_host_key (out type);
+		 unowned SSH2.Host? known;
+		 switch (known_hosts.checkp (host, port, key,  SSH2.HostFormat.TYPE_PLAIN | SSH2.HostFormat.KEYENC_RAW | type.get_format (), out known)) {
+		  case SSH2.CheckResult.MATCH :
+				good_key = true;
+			  break;
+
+		  case SSH2.CheckResult.MISMATCH :
+			  good_key = run_host_key_dialog<bool> (busy_dialog, "KEY MISTMATCH!!! POSSIBLE ATTACK!!!", "Proceed Anyway", "Stop Immediately", matcher.session, host, port, null);
+			  break;
+
+		  case SSH2.CheckResult.NOTFOUND :
+			  good_key = run_host_key_dialog<bool> (busy_dialog, "Unknown host.", "Accept Once", "Cancel", matcher.session, host, port, known_hosts);
+			  break;
+
+		  case SSH2.CheckResult.FAILURE :
+			  good_key = run_host_key_dialog<bool> (busy_dialog, "Failed to check for public key.", "Accept Once", "Cancel", matcher.session, host, port, null);
+			  break;
+		 }
+		} catch (IOError e) {
+			message ("Known hosts check: %s", e.message);
+			good_key = run_host_key_dialog<bool> (busy_dialog, "No database of known hosts.", "Accept Once", "Cancel", matcher.session, host, port, known_hosts);
 		}
-		var num_records = known_hosts.read_file (@"$(Environment.get_home_dir ())/.ssh/known_hosts_tabbed_mux");
-		switch (num_records > 0 ? SSH2.Error.NONE : (SSH2.Error)num_records) {
-		 case SSH2.Error.NONE :
-			 SSH2.KeyType type;
-			 var key = session.get_host_key (out type);
-			 unowned SSH2.Host? known;
-			 switch (known_hosts.checkp (host, port, key,  SSH2.HostFormat.TYPE_PLAIN | SSH2.HostFormat.KEYENC_RAW | type.get_format (), out known)) {
-			  case SSH2.CheckResult.MATCH :
-				  break;
-
-			  case SSH2.CheckResult.MISMATCH :
-				  if (!run_host_key_dialog<bool> (busy_dialog, "KEY MISTMATCH!!! POSSIBLE ATTACK!!!", "Proceed Anyway", "Stop Immediately", session, host, port, null)) {
-					  return null;
-				  }
-				  break;
-
-			  case SSH2.CheckResult.NOTFOUND :
-				  if (!run_host_key_dialog<bool> (busy_dialog, "Unknown host.", "Accept Once", "Cancel", session, host, port, known_hosts)) {
-					  return null;
-				  }
-				  break;
-
-			  case SSH2.CheckResult.FAILURE :
-				  if (!run_host_key_dialog<bool> (busy_dialog, "Failed to check for public key.", "Accept Once", "Cancel", session, host, port, null)) {
-					  return null;
-				  }
-				  break;
-			 }
-			 break;
-
-		 case SSH2.Error.FILE :
-		 case SSH2.Error.METHOD_NOT_SUPPORTED :
-		 case SSH2.Error.KNOWN_HOSTS :
-			 if (!run_host_key_dialog<bool> (busy_dialog, "No database of known hosts.", "Accept Once", "Cancel", session, host, port, known_hosts)) {
-				 return null;
-			 }
-			 break;
-
-		 default :
-			 throw_session_error<bool> (session);
-			 break;
+		if (!good_key) {
+			return null;
 		}
 		/*
 		 * Try to authenticate.
 		 */
-		unowned string? auth_methods = null;
 
 		busy_dialog.message = @"Getting authentication methods for '$(session_name)' on $(username)@$(host):$(port)...";
-		if ((yield ssh_wait_glue<bool> (session, connection.socket, () => {
-							auth_methods = session.list_authentication (username.data);
-							return auth_methods == null ? session.last_error : SSH2.Error.NONE;
-						}, busy_dialog.cancellable)) != SSH2.Error.NONE) {
-			throw_session_error<bool> (session);
-		}
-		if (auth_methods == null) {
-			throw new IOError.PERMISSION_DENIED ("No authentication mechanism provided.");
-		}
-		foreach (var method in auth_methods.split (",")) {
-			if (session.authenticated) {
+		unowned string? authentication_methods = null;
+		yield matcher.invoke_obj<unowned string> ((s, c) => authentication_methods = s.list_authentication (username.data));
+		foreach (var method in authentication_methods.split (",")) {
+			if (matcher.session.authenticated) {
 				break;
 			}
 			switch (method) {
 			 case "publickey" :
 				 busy_dialog.message = @"Trying public key authentication for '$(session_name)' on $(username)@$(host):$(port)...";
-				 yield do_public_key_auth<bool> (connection.socket, session, username, host, port, busy_dialog.cancellable, get_password);
+				 yield do_public_key_auth (matcher, username, host, port, get_password);
 				 break;
 
 			 case "keyboard-interactive" :
@@ -254,14 +182,9 @@ internal class TabbedMux.TMuxSshStream : TMuxStream {
 					 break;
 				 }
 				 busy_dialog.message = @"Trying interactive authentication for '$(session_name)' on $(username)@$(host):$(port)...";
-				 switch (yield ssh_wait_glue<bool> (session, connection.socket, () => password_adapter (session, username, (!)get_password), busy_dialog.cancellable)) {
-				  case SSH2.Error.NONE :
-				  case SSH2.Error.AUTHENTICATION_FAILED :
-					  break;
-
-				  default :
-					  throw_session_error<bool> (session);
-					  break;
+				 var attempts = 0;
+				 while ((yield matcher.invoke ((s, c) => password_adapter (s, username, (!)get_password), null, SSH2.Error.AUTHENTICATION_FAILED)) && attempts < 3) {
+					 attempts++;
 				 }
 				 break;
 
@@ -274,18 +197,9 @@ internal class TabbedMux.TMuxSshStream : TMuxStream {
 				 if (password == null) {
 					 break;
 				 }
-				 switch (yield ssh_wait_glue<bool> (session, connection.socket, () => session.auth_password (username, (!)password), busy_dialog.cancellable)) {
-				  case SSH2.Error.NONE:
-					  message ("%s@%s:%d:%s: Password succeeded.", username, host, port, session_name);
-					  break;
-
-				  case SSH2.Error.AUTHENTICATION_FAILED:
-					  message ("%s@%s:%d:%s: Password failed.", username, host, port, session_name);
-					  break;
-
-				  default:
-					  throw_session_error<bool> (session);
-					  break;
+				 var attempts = 0;
+				 while ((yield matcher.invoke ((s, c) => s.auth_password (username, (!)password), null, SSH2.Error.AUTHENTICATION_FAILED)) && attempts < 3) {
+					 attempts++;
 				 }
 				 break;
 
@@ -294,7 +208,7 @@ internal class TabbedMux.TMuxSshStream : TMuxStream {
 				 break;
 			}
 		}
-		if (!session.authenticated) {
+		if (!matcher.session.authenticated) {
 			throw new IOError.PERMISSION_DENIED ("Could not authenticate.");
 		}
 		/*
@@ -302,57 +216,16 @@ internal class TabbedMux.TMuxSshStream : TMuxStream {
 		 */
 		busy_dialog.message = @"Starting TMux on '$(session_name)' on $(username)@$(host):$(port)...";
 		SSH2.Channel? channel = null;
-		if ((yield ssh_wait_glue<bool> (session, connection.socket, () => { channel = session.open_channel (); return channel == null ? session.last_error : SSH2.Error.NONE; }, busy_dialog.cancellable)) != SSH2.Error.NONE) {
-			throw_session_error<bool> (session);
-		}
+		yield matcher.invoke_obj<unowned SSH2.Channel> ((s, c) => channel = s.open_channel (), null);
 		var command = @"TERM=$(TERM_TYPE) $(Shell.quote (binary)) -u -C new -A -s $(Shell.quote (session_name))";
 		message ("%s@%s:%d:%s: executing %s", username, host, port, session_name, command);
-		if ((yield ssh_wait_glue<bool> (session, connection.socket, () => ((!)channel).start_command (command), busy_dialog.cancellable)) != SSH2.Error.NONE) {
-			throw_session_error<bool> (session);
-		}
+		yield matcher.invoke ((s, c) => ((!)c).start_command (command), channel);
+		
 		/*
 		 * Create an Stream and return it.
 		 */
-		session.set_keep_alive (true, 10);
-		return new TMuxSshStream (session_name, host, port, username, binary, connection.socket, (!)(owned) session, (!)(owned) channel);
-	}
-	private delegate SSH2.Error SshEventHandler ();
-	/**
-	 * Glue libssh2 to GLib's event loop.
-	 *
-	 * If there is either no data or reading would block,
-	 * Take our current continuation and make it the callback for data being
-	 * present in the underlying GIO socket (libssh2 isn't helpful here) and put
-	 * it in the dispatch loop, then wait.
-	 */
-	private static async SSH2.Error ssh_wait_glue<T> (SSH2.Session<T> session, Socket socket, SshEventHandler handler, Cancellable? cancellable = null, int seconds_to_next = 0) {
-		SSH2.Error result;
-		SocketSource? source = null;
-		/* Perform a non-blocking read-ish operation using libssh2. */
-		session.blocking = false;
-		while ((result = handler ()) == SSH2.Error.AGAIN) {
-			if (source != null) {
-				warning ("SSH somehow re-entered an active asynchronous callback.");
-			}
-			SourceFunc async_continue = ssh_wait_glue.callback;
-			source = socket.create_source (IOCondition.IN, cancellable);
-			((!)source).set_callback ((socket, condition) => { async_continue (); return false; });
-			if (seconds_to_next > 0) {
-				/* If we should send a keep alive, add a timer. */
-				var timeout = new TimeoutSource.seconds (seconds_to_next);
-				timeout.set_callback (() => false);
-				((!)source).add_child_source (timeout);
-			}
-			((!)source).attach (MainContext.default ());
-			yield;
-			source = null;
-		}
-		return result;
-	}
-	private static void throw_session_error<T> (SSH2.Session<T> session) throws IOError {
-		char[] error_message;
-		session.get_last_error (out error_message);
-		throw new IOError.INVALID_DATA ((string) error_message);
+		matcher.session.set_keep_alive (true, 10);
+		return new TMuxSshStream (session_name, host, port, username, binary, matcher, (!)(owned) channel);
 	}
 	private static bool run_host_key_dialog<T> (Gtk.Window parent, string message, string yes, string no, SSH2.Session<T> session, string host, uint16 port, SSH2.KnownHosts? known_hosts) {
 		Gtk.Dialog dialog;
@@ -401,6 +274,118 @@ internal class TabbedMux.TMuxSshStream : TMuxStream {
 		}
 		dialog.destroy ();
 		return result;
+	}
+}
+/**
+ * Wrapper to control how libssh2 and GLib interact.
+ */
+public class TabbedMux.AsyncImpedanceMatcher {
+	public delegate SSH2.Error Operation (SSH2.Session<bool> session, SSH2.Channel? channel);
+	public delegate ssize_t OperationSsize_t (SSH2.Session<bool> session, SSH2.Channel? channel);
+	public delegate unowned T? OperationObj<T> (SSH2.Session<bool> session, SSH2.Channel? channel);
+
+	public SSH2.Session<bool> session = SSH2.Session.create<bool> ();
+	public Socket socket;
+	public Cancellable? cancellable;
+	public AsyncImpedanceMatcher (Socket socket) {
+		this.socket = socket;
+		session.set_disconnect_handler ((session, reason, msg, language, ref user_data) => message ("Disconnect: %s", (string) msg));
+
+	}
+	/**
+	 * Call a method that returns a ssize_t, which will be negative on error, or positive on success.
+	 */
+	public async ssize_t invoke_ssize_t (OperationSsize_t handler, SSH2.Channel? channel = null) throws IOError {
+		ssize_t result = 0;
+		yield invoke ((s, c) => (result = handler (s, c)) > 0 ? SSH2.Error.NONE : (SSH2.Error)result, channel);
+		return result;
+	}
+	/**
+	 * Call a method that returns an object or a null reference on failure. If it
+	 * fails, the error is automatically extracted.
+	 */
+	public async bool invoke_obj<T> (OperationObj<T> handler, SSH2.Channel? channel = null, SSH2.Error supression = SSH2.Error.NONE) throws IOError {
+		return yield invoke ((s, c) => handler (s, c) != null ? SSH2.Error.NONE : s.last_error, channel);
+	}
+	/**
+	 * Glue libssh2 to GLib's event loop.
+	 *
+	 * If there is either no data or reading would block, Take our current
+	 * continuation and make it the callback for data being present in the
+	 * underlying GIO socket (libssh2 isn't helpful here) and put it in the
+	 * dispatch loop, then wait.
+	 * @param handler the operation that will be performed. It will be called as
+	 * many times as needed to be successful.
+	 * @param channel the channel that needs I/O, if any.
+	 * @param suppression an error that will not cause an exception to be thrown.
+	 * @return normally false, but true if the suppressed error is caught.
+	 */
+	public async bool invoke (Operation handler, SSH2.Channel? channel = null, SSH2.Error supression = SSH2.Error.NONE) throws IOError {
+		SSH2.Error result;
+		SocketSource? source = null;
+		/* Perform a non-blocking read operation using libssh2. */
+		session.blocking = false;
+
+		while ((result = handler (session, channel)) == SSH2.Error.AGAIN) {
+			if (source != null) {
+				warning ("SSH somehow re-entered an active asynchronous callback.");
+			}
+			SourceFunc async_continue = invoke.callback;
+			source = socket.create_source (IOCondition.IN, cancellable);
+			((!)source).set_callback ((socket, condition) => { async_continue (); return false; });
+
+			/* Perform an obligatory SSH keep-alive.  */
+			int seconds_to_next;
+			if ((result = session.send_keep_alive (out seconds_to_next)) != SSH2.Error.NONE) {
+				break;
+			}
+			if (seconds_to_next > 0) {
+				/* If we should send a keep alive, add a timer. */
+				var timeout = new TimeoutSource.seconds (seconds_to_next);
+				timeout.set_callback (() => false);
+				((!)source).add_child_source (timeout);
+			}
+			((!)source).attach (MainContext.default ());
+			yield;
+			source = null;
+		}
+		if (result == supression) {
+			return true;
+		}
+		if (channel != null && result != SSH2.Error.NONE) {
+			char[]? error_message = null;
+			session.get_last_error (out error_message);
+			if (channel.eof () != 0 && channel.wait_closed () != SSH2.Error.NONE) {
+				throw new IOError.CLOSED (@"Unable to close channel.");
+			}
+			if (error_message != null) {
+				throw new IOError.FAILED ((string) error_message);
+			}
+			if (channel.exit_status > 0) {
+				throw new IOError.CLOSED (@"Remote TMux terminated with $(channel.exit_status).");
+			}
+			char[]? signal_name;
+			char[]? language_tag;
+			if (channel.get_exit_signal (out signal_name, out error_message, out language_tag) == SSH2.Error.NONE && signal_name != null) {
+				throw new IOError.CLOSED (@"Remote TMux caught signal $((string) signal_name).");
+			}
+		}
+
+		if (result == SSH2.Error.SOCKET_RECV) {
+			/* Some error in the underlying socket. */
+			int no = errno;
+			throw_errno (no);
+		}
+
+		if (result != SSH2.Error.NONE) {
+			char[] error_message;
+			session.get_last_error (out error_message);
+			throw new IOError.INVALID_DATA ((string) error_message);
+		}
+		if (cancellable != null && cancellable.is_cancelled ()) {
+			throw new IOError.CANCELLED("User cancelled.");
+		}
+		return false;
 	}
 }
 namespace TabbedMux {
