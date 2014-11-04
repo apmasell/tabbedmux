@@ -1,3 +1,12 @@
+tabbedmux (1.12~ppa0) trusty; urgency=medium
+
+  * Allow adding keys to known hosts
+  * Make known hosts checking actually work
+  * Use separate known hosts file since OpenSSH one is not compatible
+  * Add missing closing quote to status messages
+
+ -- Andre Masella <andre@masella.name>  Tue, 04 Nov 2014 09:04:40 -0500
+
 tabbedmux (1.11~ppa0) trusty; urgency=medium
 
   * Add known hosts checking
