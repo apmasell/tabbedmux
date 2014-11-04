@@ -28,7 +28,8 @@ internal class TabbedMux.TMuxSshStream : TMuxStream {
 	}
 
 	~TMuxSshStream () {
-		/* To make libssh happy, the channel must be destroyed before the session. */
+		/* To make libssh happy, the channel must be destroyed before the session, synchronously. */
+		session.blocking = true;
 		channel = null;
 		session = null;
 	}
