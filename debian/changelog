@@ -1,3 +1,14 @@
+tabbedmux (1.11~ppa0) trusty; urgency=medium
+
+  * Add known hosts checking
+  * Allow decrypting the user's password-protected private key
+  * Make all SSH I/O non-blocking
+  * Put less stuff on the console
+  * Force resize on start up after short delay
+  * Allow setting the font
+
+ -- Andre Masella <andre@masella.name>  Tue, 04 Nov 2014 07:54:56 -0500
+
 tabbedmux (1.10~ppa0) trusty; urgency=medium
 
   * Add accelerators to copy, paste, new, and rename
