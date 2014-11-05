@@ -466,6 +466,7 @@ public class TabbedMux.Window : Gtk.ApplicationWindow {
 	private void on_about () {
 		Gtk.show_about_dialog (this,
 				       "program-name", "TabbedMux",
+							 "version", VERSION,
 				       "logo_icon_name", "utilities-terminal",
 				       "copyright", "Copyright 2013-2014 Andre Masella",
 				       "authors", new string[] { "Andre Masella" },

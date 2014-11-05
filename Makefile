@@ -20,6 +20,7 @@ SOURCES = \
 	tmux_ssh.vala \
 	util.vala \
 	window.vala \
+	version.vapi \
 	$(NULL)
 
 VALA_PKGS = \
@@ -31,7 +32,7 @@ VALA_PKGS = \
 	--pkg vte-2.90 \
 	$(NULL)
 
-tabbedmux: $(SOURCES)
+tabbedmux: $(SOURCES) version.h
 	valac \
 		--debug \
 		--gresources resources.xml \
@@ -44,6 +45,14 @@ GLIB_COMPILE_RESOURCES=glib-compile-resources
 
 resources.c: resources.xml $(shell $(GLIB_COMPILE_RESOURCES) --generate-dependencies resources.xml)
 	$(GLIB_COMPILE_RESOURCES) --target=$@  --generate-source $<
+
+ifeq (,$(wildcard .git))
+version.h: debian/control
+	dpkg-parsechangelog | awk -F':|~' '/Version/ { print "#define TABBED_MUX_VERSION \"" $$2 "\"" }' > $@
+else
+version.h: $(wildcard .git/refs/tags/*)
+	git for-each-ref refs/tags --sort=-authordate --format='#define TABBED_MUX_VERSION "%(refname:short)"' --count=1 > $@
+endif
 
 clean:
 	rm -f $(patsubst %.vala, %.c, $(filter %.vala, $(SOURCES))) resources.c tabbedmux

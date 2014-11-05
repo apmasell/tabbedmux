@@ -5,6 +5,7 @@ debian/*.log
 debian/*.substvars
 debian/files
 tabbedmux
+version.h
 !password_adapter.c
 !misc.c
 !tmux_decode.c
