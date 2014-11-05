@@ -304,8 +304,8 @@ public class TabbedMux.AsyncImpedanceMatcher {
 	 * Call a method that returns an object or a null reference on failure. If it
 	 * fails, the error is automatically extracted.
 	 */
-	public async bool invoke_obj<T> (OperationObj<T> handler, SSH2.Channel? channel = null, SSH2.Error supression = SSH2.Error.NONE) throws IOError {
-		return yield invoke ((s, c) => handler (s, c) != null ? SSH2.Error.NONE : s.last_error, channel);
+	public async bool invoke_obj<T> (OperationObj<T> handler, SSH2.Channel? channel = null, SSH2.Error suppression = SSH2.Error.NONE) throws IOError {
+		return yield invoke ((s, c) => handler (s, c) != null ? SSH2.Error.NONE : s.last_error, channel, suppression);
 	}
 	/**
 	 * Glue libssh2 to GLib's event loop.
@@ -320,7 +320,7 @@ public class TabbedMux.AsyncImpedanceMatcher {
 	 * @param suppression an error that will not cause an exception to be thrown.
 	 * @return normally false, but true if the suppressed error is caught.
 	 */
-	public async bool invoke (Operation handler, SSH2.Channel? channel = null, SSH2.Error supression = SSH2.Error.NONE) throws IOError {
+	public async bool invoke (Operation handler, SSH2.Channel? channel = null, SSH2.Error suppression = SSH2.Error.NONE) throws IOError {
 		SSH2.Error result;
 		SocketSource? source = null;
 		/* Perform a non-blocking read operation using libssh2. */
@@ -349,7 +349,7 @@ public class TabbedMux.AsyncImpedanceMatcher {
 			yield;
 			source = null;
 		}
-		if (result == supression) {
+		if (result == suppression) {
 			return true;
 		}
 		if (channel != null && result != SSH2.Error.NONE) {
