@@ -1,6 +1,7 @@
 NULL = 
 PREFIX ?= /usr
 DESTDIR ?= 
+G_SCHEMA_COMPILER ?= glib-compile-schemas
 
 SOURCES = \
 	application.vala \
@@ -63,6 +64,6 @@ install:
 	install tabbedmux.desktop $(DESTDIR)$(PREFIX)/share/applications
 	install -d $(DESTDIR)$(PREFIX)/share/glib-2.0/schemas
 	install name.masella.tabbedmux.gschema.xml $(DESTDIR)$(PREFIX)/share/glib-2.0/schemas
-	glib-compile-schemas $(DESTDIR)$(PREFIX)/share/glib-2.0/schemas
+	$(G_SCHEMA_COMPILER) $(DESTDIR)$(PREFIX)/share/glib-2.0/schemas
 
 .PHONY: clean  install
