@@ -87,7 +87,7 @@ public class TabbedMux.Window : Gtk.ApplicationWindow {
 		/* Allow receiving detailed resize information. */
 		add_events (Gdk.EventMask.STRUCTURE_MASK | Gdk.EventMask.SUBSTRUCTURE_MASK);
 
-		clipboard =  Gtk.Clipboard.get_for_display (get_display (), Gdk.SELECTION_PRIMARY);
+		clipboard =  Gtk.Clipboard.get_for_display (get_display (), Gdk.SELECTION_CLIPBOARD);
 
 		settings = new Settings (application.application_id);
 
@@ -487,7 +487,6 @@ public class TabbedMux.Window : Gtk.ApplicationWindow {
 	private void copy_to_tmux () {
 		var widget = notebook.get_nth_page (notebook.page) as Terminal;
 		if (widget != null) {
-			var clipboard = Gtk.Clipboard.get_for_display (get_display (), Gdk.SELECTION_CLIPBOARD);
 			((!)widget).tmux_window.stream.set_buffer (clipboard.wait_for_text ());
 		}
 	}
