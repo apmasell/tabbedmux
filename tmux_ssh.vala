@@ -47,7 +47,6 @@ internal class TabbedMux.TMuxSshStream : TMuxStream {
 		while ((new_line = search_buffer (buffer)) < 0) {
 			var length = yield matcher.invoke_ssize_t ((s, c) => c.read (data), channel);
 			buffer.append_len ((string) data, length);
-
 		}
 		/* Take the whole line from the buffer and return it. */
 		var str = buffer.str[0 : new_line];
@@ -84,7 +83,7 @@ internal class TabbedMux.TMuxSshStream : TMuxStream {
 					message ("Authentication succeeded for %s@%s:%hu with public key %s.", username, host, port, ((!)key).comment ?? "unknown");
 					return;
 				} catch (IOError e) {
-				message ("Authentication failed for %s@%s:%hu with public key %s: %s", username, host, port, ((!)key).comment ?? "unknown", e.message);
+					message ("Authentication failed for %s@%s:%hu with public key %s: %s", username, host, port, ((!)key).comment ?? "unknown", e.message);
 				}
 			}
 		} catch (IOError e) {
@@ -142,26 +141,26 @@ internal class TabbedMux.TMuxSshStream : TMuxStream {
 		var good_key = false;
 		try {
 			yield matcher.invoke_ssize_t ((s, c) => known_hosts.read_file (@"$(Environment.get_home_dir ())/.ssh/known_hosts_tabbed_mux"));
-		 SSH2.KeyType type;
-		 var key = matcher.session.get_host_key (out type);
-		 unowned SSH2.Host? known;
-		 switch (known_hosts.checkp (host, port, key,  SSH2.HostFormat.TYPE_PLAIN | SSH2.HostFormat.KEYENC_RAW | type.get_format (), out known)) {
-		  case SSH2.CheckResult.MATCH :
-				good_key = true;
-			  break;
+			SSH2.KeyType type;
+			var key = matcher.session.get_host_key (out type);
+			unowned SSH2.Host? known;
+			switch (known_hosts.checkp (host, port, key,  SSH2.HostFormat.TYPE_PLAIN | SSH2.HostFormat.KEYENC_RAW | type.get_format (), out known)) {
+			 case SSH2.CheckResult.MATCH :
+				 good_key = true;
+				 break;
 
-		  case SSH2.CheckResult.MISMATCH :
-			  good_key = run_host_key_dialog<bool> (busy_dialog, "KEY MISTMATCH!!! POSSIBLE ATTACK!!!", "Proceed Anyway", "Stop Immediately", matcher.session, host, port, null);
-			  break;
+			 case SSH2.CheckResult.MISMATCH :
+				 good_key = run_host_key_dialog<bool> (busy_dialog, "KEY MISTMATCH!!! POSSIBLE ATTACK!!!", "Proceed Anyway", "Stop Immediately", matcher.session, host, port, null);
+				 break;
 
-		  case SSH2.CheckResult.NOTFOUND :
-			  good_key = run_host_key_dialog<bool> (busy_dialog, "Unknown host.", "Accept Once", "Cancel", matcher.session, host, port, known_hosts);
-			  break;
+			 case SSH2.CheckResult.NOTFOUND :
+				 good_key = run_host_key_dialog<bool> (busy_dialog, "Unknown host.", "Accept Once", "Cancel", matcher.session, host, port, known_hosts);
+				 break;
 
-		  case SSH2.CheckResult.FAILURE :
-			  good_key = run_host_key_dialog<bool> (busy_dialog, "Failed to check for public key.", "Accept Once", "Cancel", matcher.session, host, port, null);
-			  break;
-		 }
+			 case SSH2.CheckResult.FAILURE :
+				 good_key = run_host_key_dialog<bool> (busy_dialog, "Failed to check for public key.", "Accept Once", "Cancel", matcher.session, host, port, null);
+				 break;
+			}
 		} catch (IOError e) {
 			message ("Known hosts check: %s", e.message);
 			good_key = run_host_key_dialog<bool> (busy_dialog, "No database of known hosts.", "Accept Once", "Cancel", matcher.session, host, port, known_hosts);
@@ -197,7 +196,7 @@ internal class TabbedMux.TMuxSshStream : TMuxStream {
 				 }
 				 break;
 
-			 case "password":
+			 case "password" :
 				 if (get_password == null) {
 					 break;
 				 }
@@ -212,7 +211,7 @@ internal class TabbedMux.TMuxSshStream : TMuxStream {
 				 }
 				 break;
 
-			 default:
+			 default :
 				 message ("%s@%s:%d:%s: Skipping unknown authentication method: %s", username, host, port, session_name, method);
 				 break;
 			}
@@ -229,7 +228,7 @@ internal class TabbedMux.TMuxSshStream : TMuxStream {
 		var command = @"TERM=$(TERM_TYPE) $(Shell.quote (binary)) -u -C new -A -s $(Shell.quote (session_name))";
 		message ("%s@%s:%d:%s: executing %s", username, host, port, session_name, command);
 		yield matcher.invoke ((s, c) => ((!)c).start_command (command), channel);
-		
+
 		/*
 		 * Create an Stream and return it.
 		 */
@@ -299,7 +298,6 @@ public class TabbedMux.AsyncImpedanceMatcher {
 	public AsyncImpedanceMatcher (Socket socket) {
 		this.socket = socket;
 		session.set_disconnect_handler ((session, reason, msg, language, ref user_data) => message ("Disconnect: %s", (string) msg));
-
 	}
 	/**
 	 * Call a method that returns a ssize_t, which will be negative on error, or positive on success.
@@ -392,7 +390,7 @@ public class TabbedMux.AsyncImpedanceMatcher {
 			throw new IOError.INVALID_DATA ((string) error_message);
 		}
 		if (cancellable != null && cancellable.is_cancelled ()) {
-			throw new IOError.CANCELLED("User cancelled.");
+			throw new IOError.CANCELLED ("User cancelled.");
 		}
 		return false;
 	}
