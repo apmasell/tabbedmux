@@ -1,3 +1,10 @@
+tabbedmux (1.13~ppa0) trusty; urgency=medium
+
+  * Improve clipboard consistency
+  * Disable Nagle algorithm on socket
+
+ -- Andre Masella <andre@masella.name>  Fri, 28 Nov 2014 08:26:18 -0500
+
 tabbedmux (1.12~ppa0) trusty; urgency=medium
 
   * Allow adding keys to known hosts
