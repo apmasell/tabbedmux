@@ -118,6 +118,15 @@ internal class TabbedMux.TMuxSshStream : TMuxStream {
 		var client = new SocketClient ();
 		var connection = yield client.connect_to_host_async (host, port);
 
+		/*
+		 * Try to set no delay.
+		 */
+		try {
+			connection.socket.set_option (IPPROTO_TCP, TCP_NODELAY, 1);
+		} catch (Error e) {
+			warning (e.message);
+		}
+
 		var matcher = new AsyncImpedanceMatcher (connection.socket);
 		matcher.cancellable = busy_dialog.cancellable;
 		/*

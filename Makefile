@@ -30,6 +30,7 @@ VALA_PKGS = \
 	--pkg gtk+-3.0 \
 	--pkg libnotify \
 	--pkg libssh2 \
+	--pkg tcpmisc \
 	--pkg vte-2.90 \
 	$(NULL)
 
@@ -40,6 +41,7 @@ tabbedmux: $(SOURCES) version.h
 		--save-temps \
 		--target-glib=2.38 \
 		--vapidir vapis \
+		--vapidir . \
 		$(VALA_PKGS) $^ -o $@
 
 GLIB_COMPILE_RESOURCES=glib-compile-resources
