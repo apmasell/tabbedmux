@@ -348,7 +348,7 @@ public class TabbedMux.AsyncImpedanceMatcher {
 				warning ("SSH somehow re-entered an active asynchronous callback.");
 			}
 			SourceFunc async_continue = invoke.callback;
-			source = socket.create_source (IOCondition.IN, cancellable);
+			source = socket.create_source (session.block_directions.to_condition (), cancellable);
 			((!)source).set_callback ((socket, condition) => { async_continue (); return false; });
 
 			/* Perform an obligatory SSH keep-alive.  */
