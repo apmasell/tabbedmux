@@ -1,3 +1,11 @@
+tabbedmux (1.14~ppa0) trusty; urgency=medium
+
+  * Change concurrency model to eliminate pauses
+  * Correctly set IOCondition from libssh2's Direction
+  * Fix authentication with public key from file
+
+ -- Andre Masella <andre@masella.name>  Fri, 28 Nov 2014 21:58:21 -0500
+
 tabbedmux (1.13~ppa0) trusty; urgency=medium
 
   * Improve clipboard consistency
