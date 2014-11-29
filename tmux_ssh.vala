@@ -4,7 +4,6 @@
 internal class TabbedMux.TMuxSshStream : TMuxStream {
 	AsyncImpedanceMatcher matcher;
 	SSH2.Channel channel;
-	StringBuilder buffer = new StringBuilder ();
 	const int MAX_UNLOCK_ATTEMPTS = 3;
 
 	public string host {
@@ -24,6 +23,7 @@ internal class TabbedMux.TMuxSshStream : TMuxStream {
 		this.host = host;
 		this.port = port;
 		this.username = username;
+		matcher.cancellable = cancellable;
 	}
 
 	~TMuxSshStream () {
@@ -35,37 +35,12 @@ internal class TabbedMux.TMuxSshStream : TMuxStream {
 	/**
 	 * Read from the remote TMux instance via a non-blocking libssh2 socket.
 	 */
-	protected override async string? read_line_async (Cancellable cancellable) throws Error {
-		/* If we've been told to stop, stop. */
-		if (cancellable.is_cancelled ()) {
-			return null;
-		}
-		matcher.cancellable = cancellable;
-
-		uint8 data[1024];
-		int new_line;
-		/* Read and append to a StringBuilder until we have a line. */
-		while ((new_line = search_buffer (buffer)) < 0) {
-			var length = yield matcher.invoke_ssize_t ((s, c) => c.read (data), channel);
-			buffer.append_len ((string) data, length);
-		}
-		/* Take the whole line from the buffer and return it. */
-		var str = buffer.str[0 : new_line];
-		buffer.erase (0, new_line + 1);
-		return str;
+	protected override async ssize_t read (uint8[] buffer) throws Error {
+		return yield matcher.invoke_ssize_t ((s, c) => c.read (buffer), channel);
 	}
 
-	protected override void write (uint8[] data) throws IOError {
-		/* To make life remote sane, writes are blocking while reads are non-blocking. In theory, we shouldn't block in the Gtk+ thread, but we write sufficiently little data that the writes complete immediately and this simplifies the code. */
-		matcher.session.blocking = true;
-		var result = channel.write (data);
-		matcher.session.blocking = false;
-		if (result != data.length) {
-			char[] error_message;
-			matcher.session.get_last_error (out error_message);
-			critical ("%s:%s: %s", name, session_name, (string) error_message);
-			throw new IOError.FAILED ((string) error_message);
-		}
+	protected override async ssize_t write (uint8[] data) throws Error {
+		return yield matcher.invoke_ssize_t ((s, c) => c.write (data), channel);
 	}
 
 	/**
@@ -160,20 +135,20 @@ internal class TabbedMux.TMuxSshStream : TMuxStream {
 				 break;
 
 			 case SSH2.CheckResult.MISMATCH :
-				 good_key = run_host_key_dialog<void*> (busy_dialog, "KEY MISTMATCH!!! POSSIBLE ATTACK!!!", "Proceed Anyway", "Stop Immediately", matcher.session, host, port, null);
+				 good_key = run_host_key_dialog<void *> (busy_dialog, "KEY MISTMATCH!!! POSSIBLE ATTACK!!!", "Proceed Anyway", "Stop Immediately", matcher.session, host, port, null);
 				 break;
 
 			 case SSH2.CheckResult.NOTFOUND :
-				 good_key = run_host_key_dialog<void*> (busy_dialog, "Unknown host.", "Accept Once", "Cancel", matcher.session, host, port, known_hosts);
+				 good_key = run_host_key_dialog<void *> (busy_dialog, "Unknown host.", "Accept Once", "Cancel", matcher.session, host, port, known_hosts);
 				 break;
 
 			 case SSH2.CheckResult.FAILURE :
-				 good_key = run_host_key_dialog<void*> (busy_dialog, "Failed to check for public key.", "Accept Once", "Cancel", matcher.session, host, port, null);
+				 good_key = run_host_key_dialog<void *> (busy_dialog, "Failed to check for public key.", "Accept Once", "Cancel", matcher.session, host, port, null);
 				 break;
 			}
 		} catch (IOError e) {
 			message ("Known hosts check: %s", e.message);
-			good_key = run_host_key_dialog<void*> (busy_dialog, "No database of known hosts.", "Accept Once", "Cancel", matcher.session, host, port, known_hosts);
+			good_key = run_host_key_dialog<void *> (busy_dialog, "No database of known hosts.", "Accept Once", "Cancel", matcher.session, host, port, known_hosts);
 		}
 		if (!good_key) {
 			return null;
@@ -298,15 +273,16 @@ internal class TabbedMux.TMuxSshStream : TMuxStream {
  * Wrapper to control how libssh2 and GLib interact.
  */
 public class TabbedMux.AsyncImpedanceMatcher {
-	public delegate SSH2.Error Operation (SSH2.Session<void*> session, SSH2.Channel? channel);
-	public delegate ssize_t OperationSsize_t (SSH2.Session<void*> session, SSH2.Channel? channel);
-	public delegate unowned T? OperationObj<T> (SSH2.Session<void*> session, SSH2.Channel? channel);
+	public delegate SSH2.Error Operation (SSH2.Session<void *> session, SSH2.Channel? channel);
+	public delegate ssize_t OperationSsize_t (SSH2.Session<void *> session, SSH2.Channel? channel);
+	public delegate unowned T? OperationObj<T> (SSH2.Session<void *> session, SSH2.Channel? channel);
 
-	public SSH2.Session<void*> session = SSH2.Session.create<void*> ();
+	public SSH2.Session<void *> session = SSH2.Session.create<void *> ();
 	public Socket socket;
 	public Cancellable? cancellable;
 	public AsyncImpedanceMatcher (Socket socket) {
 		this.socket = socket;
+		session.blocking = false;
 		session.set_disconnect_handler ((session, reason, msg, language, ref user_data) => message ("Disconnect: %s", (string) msg));
 	}
 	/**
@@ -338,12 +314,10 @@ public class TabbedMux.AsyncImpedanceMatcher {
 	 * @return normally false, but true if the suppressed error is caught.
 	 */
 	public async bool invoke (Operation handler, SSH2.Channel? channel = null, SSH2.Error suppression = SSH2.Error.NONE) throws IOError {
-		SSH2.Error result;
+		SSH2.Error result = SSH2.Error.NONE;
 		SocketSource? source = null;
-		/* Perform a non-blocking read operation using libssh2. */
-		session.blocking = false;
 
-		while ((result = handler (session, channel)) == SSH2.Error.AGAIN) {
+		while (!cancellable.is_cancelled () && (result = handler (session, channel)) == SSH2.Error.AGAIN) {
 			if (source != null) {
 				warning ("SSH somehow re-entered an active asynchronous callback.");
 			}
@@ -354,6 +328,7 @@ public class TabbedMux.AsyncImpedanceMatcher {
 			/* Perform an obligatory SSH keep-alive.  */
 			int seconds_to_next;
 			if ((result = session.send_keep_alive (out seconds_to_next)) != SSH2.Error.NONE) {
+				warning ("SSH keep-alive failed!");
 				break;
 			}
 			if (seconds_to_next > 0) {
@@ -366,7 +341,7 @@ public class TabbedMux.AsyncImpedanceMatcher {
 			yield;
 			source = null;
 		}
-		if (result == suppression) {
+		if (result == suppression && suppression != SSH2.Error.NONE) {
 			return true;
 		}
 		if (channel != null && result != SSH2.Error.NONE) {

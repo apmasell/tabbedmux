@@ -21,11 +21,22 @@ namespace TabbedMux {
 		internal int id;
 	}
 
+	private class ExecTodo {
+		internal string command;
+		internal NextOutput action;
+		internal int window_id;
+	}
+
 	/**
 	 * A TMux session where a subclass will provide a byte stream to talk to that session.
 	 */
 	public abstract class TMuxStream : Object {
-		private Cancellable cancellable = new Cancellable ();
+		private const uint8 new_line[] = { '\n' };
+
+		StringBuilder buffer = new StringBuilder ();
+		protected Cancellable cancellable = new Cancellable ();
+		protected bool die_on_cancel = false;
+		private Gee.Queue<ExecTodo> exec_queue = new Gee.ArrayQueue<ExecTodo> ();
 		private int id = -1;
 		private int output_num = 1;
 		private Gee.HashMap<int, OutputTodo> outputs = new Gee.HashMap<int, OutputTodo> ();
@@ -73,10 +84,20 @@ namespace TabbedMux {
 		 */
 		public signal void window_created (TMuxWindow window);
 
+		internal void attempt_command (string command, NextOutput output_type = NextOutput.NONE, int window_id = 0) {
+			var todo = new ExecTodo ();
+			todo.command = command;
+			todo.action = output_type;
+			todo.window_id = window_id;
+			exec_queue.offer (todo);
+			cancellable.cancel ();
+		}
+
 		/**
 		 * Tell the underlying asynchronous I/O process to stop.
 		 */
 		public void cancel () {
+			die_on_cancel = true;
 			cancellable.cancel ();
 		}
 
@@ -84,89 +105,92 @@ namespace TabbedMux {
 		 * Create a new TMux window on the server.
 		 */
 		public void create_window () {
-			try {
-				exec ("new-window");
-			} catch (IOError e) {
-				critical ("%s:%s: Failed to create window: %s", name, session_name, e.message);
-			}
+			attempt_command ("new-window");
 		}
 
 		/**
 		 * Delete a TMux buffer.
 		 */
 		public void delete_buffer (uint buffer = 0) {
-			try {
-				exec (@"delete-buffer -b $(buffer)");
-			} catch (IOError e) {
-				critical ("%s:%s: Delete buffer failed: %s", name, session_name, e.message);
-			}
+			attempt_command (@"delete-buffer -b $(buffer)");
 		}
 
 		/**
 		 * Kill the current session.
 		 */
 		public void destroy () {
-			try {
-				exec ("kill-session");
-			} catch (IOError e) {
-				critical ("%s:%s: Failed to kill session: %s", name, session_name, e.message);
-			}
+			attempt_command ("kill-session");
 		}
 
 		/**
 		 * Ask the remote TMux server to die in a fire.
 		 */
 		public void kill () {
-			try {
-				exec ("kill-server");
-			} catch (IOError e) {
-				critical ("%s:%s: Failed to kill server: %s", name, session_name, e.message);
-			}
+			attempt_command ("kill-server");
 		}
 
 		/**
 		 * Rename the session on the other side.
 		 */
 		public void rename (string name) {
-			try {
-				exec (@"rename-session $(Shell.quote(name))");
-			} catch (IOError e) {
-				critical ("%s:%s: Failed to rename session: %s", name, session_name, e.message);
-			}
+			attempt_command (@"rename-session $(Shell.quote(name))");
 		}
 
 		/**
 		 * Set a TMux buffer.
 		 */
 		public void set_buffer (string data, uint buffer = 0) {
-			try {
-				exec (@"set-buffer -b $(buffer) $(Shell.quote (data))");
-			} catch (IOError e) {
-				critical ("%s:%s: Paste buffer failed: %s", name, session_name, e.message);
-			}
+			attempt_command (@"set-buffer -b $(buffer) $(Shell.quote (data))");
 		}
 
 		/**
 		 * Blast some data at TMux and register a cookie to handle the output.
 		 */
-		internal void exec (string command, NextOutput output_type = NextOutput.NONE, int window_id = 0) throws IOError {
+		internal async void exec (string command, NextOutput output_type = NextOutput.NONE, int window_id = 0) throws Error {
 			var command_id = ++output_num;
-			write (command.data);
-			write (new uint8[] { '\n' });
 			var todo = new OutputTodo ();
 			todo.action = output_type;
 			todo.id = window_id;
 			outputs[command_id] = todo;
+			yield write_helper (command.data);
+			yield write_helper (new_line);
+		}
+
+		private async void write_helper (uint8[] data) throws Error {
+			while (true) {
+				try {
+					var length = yield write (data);
+					if (length != data.length) {
+						throw new IOError.FAILED ("Incomplete write.");
+					}
+					return;
+				} catch (IOError.CANCELLED e) {
+					if (die_on_cancel) {
+						throw e;
+					}
+					cancellable.reset ();
+					yield dispatch_queued_commands ();
+				}
+			}
 		}
 
 		/**
 		 * The “main loop” for handling TMux data.
 		 */
 		private async string process_io () {
+			try {
+				/* Our first command is to figure out what our own session ID is, since TMux uses a numeric one instead of text. */
+				yield exec ("display-message -p '#S'", NextOutput.SESSION_ID);
+				yield dispatch_queued_commands ();
+			} catch (Error e) {
+				message ("%s:%s: %s", name, session_name, e.message);
+				return e.message;
+			}
+
 			while (true) {
 				try {
 					/* Read a line from TMux and shove it into a decoder. */
-					var str = yield read_line_async (cancellable);
+					var str = yield read_line_async ();
 					if (str == null) {
 						message ("%s:%s: End of stream.", name, session_name);
 						return "No more data to read";
@@ -192,7 +216,7 @@ namespace TabbedMux {
 							 windows[window_id].rx_data ("\033[2J".data);
 						 }
 						 string? output_line;
-						 while ((output_line = yield read_line_async (cancellable)) !=  null) {
+						 while ((output_line = yield read_line_async ()) !=  null) {
 							 if (((!)output_line).has_prefix ("%end") || ((!)output_line).has_prefix ("%error")) {
 								 var temp = Decoder (((!)output_line).dup ());
 								 if (temp.pop_id () == time && temp.pop_id () == output_num) {
@@ -313,7 +337,7 @@ namespace TabbedMux {
 					  */
 					 case "%session-changed":
 					 case "%window-add":
-						 exec (@"list-windows -t $(Shell.quote(session_name)) -F \"#{window_id}:#{window_name}\"", NextOutput.WINDOWS);
+						 yield exec (@"list-windows -t $(Shell.quote(session_name)) -F \"#{window_id}:#{window_name}\"", NextOutput.WINDOWS);
 						 break;
 
 					 /*
@@ -379,10 +403,42 @@ namespace TabbedMux {
 			}
 		}
 
+		protected async void dispatch_queued_commands () throws Error {
+			ExecTodo todo;
+			while ((todo = exec_queue.poll ()) != null) {
+				yield exec (todo.command, todo.action, todo.window_id);
+			}
+		}
+
 		/**
 		 * A subclass must implement a method to read data from the TMux instance.
 		 */
-		protected abstract async string? read_line_async (Cancellable cancellable) throws Error;
+		protected abstract async ssize_t read (uint8[] buffer) throws Error;
+
+		/**
+		 * Read a line from the remote TMux instance.
+		 */
+		private async string? read_line_async () throws Error {
+			uint8 data[1024];
+			int new_line;
+			/* Read and append to a StringBuilder until we have a line. */
+			while ((new_line = search_buffer (buffer)) < 0) {
+				try {
+					var length = yield read (data);
+					buffer.append_len ((string) data, length);
+				} catch (IOError.CANCELLED e) {
+					if (die_on_cancel) {
+						throw e;
+					}
+					cancellable.reset ();
+					yield dispatch_queued_commands ();
+				}
+			}
+			/* Take the whole line from the buffer and return it. */
+			var str = buffer.str[0 : new_line];
+			buffer.erase (0, new_line + 1);
+			return str;
+		}
 
 		/**
 		 * Start reading data from TMux.
@@ -391,19 +447,13 @@ namespace TabbedMux {
 			if (!started) {
 				process_io.begin ((sender, result) => connection_closed (process_io.end (result)));
 				started = true;
-				try {
-					/* Our first command is to figure out what our own session ID is, since TMux uses a numeric one instead of text. */
-					exec ("display-message -p '#S'", NextOutput.SESSION_ID);
-				} catch (Error e) {
-					message ("%s:%s: %s", name, session_name, e.message);
-				}
 			}
 		}
 
 		/**
 		 * A subclass must implement a method to blast data at the TMux instance.
 		 */
-		protected abstract void write (uint8[] data) throws IOError;
+		protected abstract async ssize_t write (uint8[] data) throws Error;
 	}
 
 	/**
@@ -460,22 +510,14 @@ namespace TabbedMux {
 		 * Kill the current window on the remote end.
 		 */
 		public void destroy () {
-			try {
-				stream.exec (@"kill-window -t @$(id)");
-			} catch (IOError e) {
-				critical ("%s:%s:%d: Kill window failed: %s", stream.name, stream.session_name, id, e.message);
-			}
+			stream.attempt_command (@"kill-window -t @$(id)");
 		}
 
 		/**
 		 * Paste a TMux buffer.
 		 */
 		public void paste_buffer (uint buffer = 0) {
-			try {
-				stream.exec (@"paste-buffer -p -b $(buffer) -t @$(id)");
-			} catch (IOError e) {
-				critical ("%s:%s:%d: Paste buffer failed: %s", stream.name, stream.session_name, id, e.message);
-			}
+			stream.attempt_command (@"paste-buffer -p -b $(buffer) -t @$(id)");
 		}
 
 		/**
@@ -484,69 +526,53 @@ namespace TabbedMux {
 		 * Pastes text using bracketed pasting, when needed.
 		 */
 		public void paste_text (string text) {
-			try {
-				var buffer = new StringBuilder ();
-				buffer.append ("set-buffer \"");
-				for (var it = 0; it < text.length; it++) {
-					switch (text[it]) {
-					 case '\n' :
-						 buffer.append_c ('\r');
-						 break;
+			var buffer = new StringBuilder ();
+			buffer.append ("set-buffer \"");
+			for (var it = 0; it < text.length; it++) {
+				switch (text[it]) {
+				 case '\n':
+					 buffer.append_c ('\r');
+					 break;
 
-					 case '\"':
-						 buffer.append_c ('\\');
-						 buffer.append_c ('\"');
-						 break;
+				 case '\"':
+					 buffer.append_c ('\\');
+					 buffer.append_c ('\"');
+					 break;
 
-					 case '\\':
-						 buffer.append_c ('\\');
-						 buffer.append_c ('\\');
-						 break;
+				 case '\\':
+					 buffer.append_c ('\\');
+					 buffer.append_c ('\\');
+					 break;
 
-					 default:
-						 buffer.append_c (text[it]);
-						 break;
-					}
+				 default:
+					 buffer.append_c (text[it]);
+					 break;
 				}
-				buffer.append_c ('\"');
-				stream.exec (buffer.str);
-				stream.exec (@"paste-buffer -dp -t @$(id)");
-			} catch (IOError e) {
-				critical ("%s:%s:%d: Paste text failed: %s", stream.name, stream.session_name, id, e.message);
 			}
+			buffer.append_c ('\"');
+			stream.attempt_command (buffer.str);
+			stream.attempt_command (@"paste-buffer -dp -t @$(id)");
 		}
 
 		/**
 		 * Get window size from TMux.
 		 */
 		public void pull_size () {
-			try {
-				stream.exec (@"list-windows -t $(Shell.quote(stream.session_name)) -F \"#{window_id}:#{window_width}:#{window_height}\"", NextOutput.WINDOW_SIZE);
-			} catch (IOError e) {
-				critical ("%s:%s:%d: Pull size failed: %s", stream.name, stream.session_name, id, e.message);
-			}
+			stream.attempt_command (@"list-windows -t $(Shell.quote(stream.session_name)) -F \"#{window_id}:#{window_width}:#{window_height}\"", NextOutput.WINDOW_SIZE);
 		}
 
 		/**
 		 * Re-request the contents of the window instead of getting incremenal changes.
 		 */
 		public void refresh () {
-			try {
-				stream.exec (@"capture-pane -p -e -t @$(id)", NextOutput.CAPTURE, id);
-			} catch (IOError e) {
-				critical ("%s:%s:%d: Capture pane failed: %s", stream.name, stream.session_name, id, e.message);
-			}
+			stream.attempt_command (@"capture-pane -p -e -t @$(id)", NextOutput.CAPTURE, id);
 		}
 
 		/**
 		 * Rename the window.
 		 */
 		public void rename (string name) {
-			try {
-				stream.exec (@"rename-window -t @$(id) $(Shell.quote(name))");
-			} catch (IOError e) {
-				critical ("%s:%s:%d: Failed to rename window: %s", stream.name, stream.session_name, id, e.message);
-			}
+			stream.attempt_command (@"rename-window -t @$(id) $(Shell.quote(name))");
 		}
 
 		/**
@@ -558,11 +584,7 @@ namespace TabbedMux {
 			if (width == this.width && height == this.height || width == 10 && height == 10) {
 				return;
 			}
-			try {
-				stream.exec (@"refresh-client -C $(width),$(height)");
-			} catch (IOError e) {
-				critical ("%s:%s:%d: Resize client failed: %s", stream.name, stream.session_name, id, e.message);
-			}
+			stream.attempt_command (@"refresh-client -C $(width),$(height)");
 		}
 
 		/**
@@ -583,21 +605,17 @@ namespace TabbedMux {
 		 * Call this when the user smashes the keyboard.
 		 */
 		public void tx_data (uint8[] text) {
-			try {
-				var command = new StringBuilder ();
-				for (var it = 0; it < text.length; it++) {
-					if (it % 50 == 0) {
-						if (it > 0) {
-							stream.exec (command.str);
-						}
-						command.printf ("send-keys -t @%d", id);
+			var command = new StringBuilder ();
+			for (var it = 0; it < text.length; it++) {
+				if (it % 50 == 0) {
+					if (it > 0) {
+						stream.attempt_command (command.str);
 					}
-					command.append_printf (" 0x%02x", text[it]);
+					command.printf ("send-keys -t @%d", id);
 				}
-				stream.exec (command.str);
-			} catch (IOError e) {
-				critical ("%s:%s:%d: Send keys failed: %s", stream.name, stream.session_name, id, e.message);
+				command.append_printf (" 0x%02x", text[it]);
 			}
+			stream.attempt_command (command.str);
 		}
 	}
 }
