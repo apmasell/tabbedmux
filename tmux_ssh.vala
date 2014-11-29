@@ -5,6 +5,7 @@ internal class TabbedMux.TMuxSshStream : TMuxStream {
 	AsyncImpedanceMatcher matcher;
 	SSH2.Channel channel;
 	StringBuilder buffer = new StringBuilder ();
+	const int MAX_UNLOCK_ATTEMPTS = 3;
 
 	public string host {
 		get; private set;
@@ -94,10 +95,19 @@ internal class TabbedMux.TMuxSshStream : TMuxStream {
 		string? password = null;
 		var public_key = @"$(Environment.get_home_dir())/.ssh/id_rsa.pub";
 		var private_key = @"$(Environment.get_home_dir())/.ssh/id_rsa";
-		while ((yield matcher.invoke ((s, c) => s.auth_publickey_from_file (username, public_key, private_key, password), null, SSH2.Error.PUBLICKEY_UNVERIFIED)) && attempts <= 3 && get_password != null) {
-			password = password_simple ("Unlock private key:", (!)get_password);
-			attempts++;
-		}
+		yield matcher.invoke ((s, c) => {
+					      var result = s.auth_publickey_from_file (username, public_key, private_key, password);
+					      if (result == SSH2.Error.PUBLICKEY_UNVERIFIED) {
+						      if (attempts < MAX_UNLOCK_ATTEMPTS && get_password != null) {
+							      attempts++;
+							      password = password_simple (@"Unlock private key (attempt $(attempts) of $(MAX_UNLOCK_ATTEMPTS):", (!)get_password);
+							      result = SSH2.Error.AGAIN;
+						      } else {
+							      result = SSH2.Error.AUTHENTICATION_FAILED;
+						      }
+					      }
+					      return result;
+				      }, null, SSH2.Error.AUTHENTICATION_FAILED);
 		return;
 	}
 
