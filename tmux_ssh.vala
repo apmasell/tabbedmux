@@ -160,20 +160,20 @@ internal class TabbedMux.TMuxSshStream : TMuxStream {
 				 break;
 
 			 case SSH2.CheckResult.MISMATCH :
-				 good_key = run_host_key_dialog<bool> (busy_dialog, "KEY MISTMATCH!!! POSSIBLE ATTACK!!!", "Proceed Anyway", "Stop Immediately", matcher.session, host, port, null);
+				 good_key = run_host_key_dialog<void*> (busy_dialog, "KEY MISTMATCH!!! POSSIBLE ATTACK!!!", "Proceed Anyway", "Stop Immediately", matcher.session, host, port, null);
 				 break;
 
 			 case SSH2.CheckResult.NOTFOUND :
-				 good_key = run_host_key_dialog<bool> (busy_dialog, "Unknown host.", "Accept Once", "Cancel", matcher.session, host, port, known_hosts);
+				 good_key = run_host_key_dialog<void*> (busy_dialog, "Unknown host.", "Accept Once", "Cancel", matcher.session, host, port, known_hosts);
 				 break;
 
 			 case SSH2.CheckResult.FAILURE :
-				 good_key = run_host_key_dialog<bool> (busy_dialog, "Failed to check for public key.", "Accept Once", "Cancel", matcher.session, host, port, null);
+				 good_key = run_host_key_dialog<void*> (busy_dialog, "Failed to check for public key.", "Accept Once", "Cancel", matcher.session, host, port, null);
 				 break;
 			}
 		} catch (IOError e) {
 			message ("Known hosts check: %s", e.message);
-			good_key = run_host_key_dialog<bool> (busy_dialog, "No database of known hosts.", "Accept Once", "Cancel", matcher.session, host, port, known_hosts);
+			good_key = run_host_key_dialog<void*> (busy_dialog, "No database of known hosts.", "Accept Once", "Cancel", matcher.session, host, port, known_hosts);
 		}
 		if (!good_key) {
 			return null;
@@ -298,11 +298,11 @@ internal class TabbedMux.TMuxSshStream : TMuxStream {
  * Wrapper to control how libssh2 and GLib interact.
  */
 public class TabbedMux.AsyncImpedanceMatcher {
-	public delegate SSH2.Error Operation (SSH2.Session<bool> session, SSH2.Channel? channel);
-	public delegate ssize_t OperationSsize_t (SSH2.Session<bool> session, SSH2.Channel? channel);
-	public delegate unowned T? OperationObj<T> (SSH2.Session<bool> session, SSH2.Channel? channel);
+	public delegate SSH2.Error Operation (SSH2.Session<void*> session, SSH2.Channel? channel);
+	public delegate ssize_t OperationSsize_t (SSH2.Session<void*> session, SSH2.Channel? channel);
+	public delegate unowned T? OperationObj<T> (SSH2.Session<void*> session, SSH2.Channel? channel);
 
-	public SSH2.Session<bool> session = SSH2.Session.create<bool> ();
+	public SSH2.Session<void*> session = SSH2.Session.create<void*> ();
 	public Socket socket;
 	public Cancellable? cancellable;
 	public AsyncImpedanceMatcher (Socket socket) {
