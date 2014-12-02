@@ -1,3 +1,9 @@
+tabbedmux (1.14~ppa1) trusty; urgency=medium
+
+  * Avoid reentering the exec queue
+
+ -- Andre Masella <andre@masella.name>  Mon, 01 Dec 2014 19:07:14 -0500
+
 tabbedmux (1.14~ppa0) trusty; urgency=medium
 
   * Change concurrency model to eliminate pauses
