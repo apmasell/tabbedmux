@@ -146,17 +146,17 @@ namespace TabbedMux {
 		/**
 		 * Blast some data at TMux and register a cookie to handle the output.
 		 */
-		internal async void exec (string command, NextOutput output_type = NextOutput.NONE, int window_id = 0) throws Error {
+		internal async void exec (bool allow_dispatch, string command, NextOutput output_type = NextOutput.NONE, int window_id = 0) throws Error {
 			var command_id = ++output_num;
 			var todo = new OutputTodo ();
 			todo.action = output_type;
 			todo.id = window_id;
 			outputs[command_id] = todo;
-			yield write_helper (command.data);
-			yield write_helper (new_line);
+			yield write_helper (command.data, allow_dispatch);
+			yield write_helper (new_line, allow_dispatch);
 		}
 
-		private async void write_helper (uint8[] data) throws Error {
+		private async void write_helper (uint8[] data, bool allow_dispatch) throws Error {
 			while (true) {
 				try {
 					var length = yield write (data);
@@ -169,7 +169,9 @@ namespace TabbedMux {
 						throw e;
 					}
 					cancellable.reset ();
-					yield dispatch_queued_commands ();
+					if (allow_dispatch) {
+						yield dispatch_queued_commands ();
+					}
 				}
 			}
 		}
@@ -180,7 +182,7 @@ namespace TabbedMux {
 		private async string process_io () {
 			try {
 				/* Our first command is to figure out what our own session ID is, since TMux uses a numeric one instead of text. */
-				yield exec ("display-message -p '#S'", NextOutput.SESSION_ID);
+				yield exec (true, "display-message -p '#S'", NextOutput.SESSION_ID);
 				yield dispatch_queued_commands ();
 			} catch (Error e) {
 				message ("%s:%s: %s", name, session_name, e.message);
@@ -337,7 +339,7 @@ namespace TabbedMux {
 					  */
 					 case "%session-changed":
 					 case "%window-add":
-						 yield exec (@"list-windows -t $(Shell.quote(session_name)) -F \"#{window_id}:#{window_name}\"", NextOutput.WINDOWS);
+						 yield exec (true, @"list-windows -t $(Shell.quote(session_name)) -F \"#{window_id}:#{window_name}\"", NextOutput.WINDOWS);
 						 break;
 
 					 /*
@@ -406,7 +408,7 @@ namespace TabbedMux {
 		protected async void dispatch_queued_commands () throws Error {
 			ExecTodo todo;
 			while ((todo = exec_queue.poll ()) != null) {
-				yield exec (todo.command, todo.action, todo.window_id);
+				yield exec (false, todo.command, todo.action, todo.window_id);
 			}
 		}
 
