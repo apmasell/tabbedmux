@@ -291,6 +291,9 @@ public class TabbedMux.AsyncImpedanceMatcher {
 	public async ssize_t invoke_ssize_t (OperationSsize_t handler, SSH2.Channel? channel = null) throws IOError {
 		ssize_t result = 0;
 		yield invoke ((s, c) => (result = handler (s, c)) > 0 ? SSH2.Error.NONE : (SSH2.Error)result, channel);
+		if (result == 0 && channel != null) {
+			yield close_channel(channel);
+		}
 		return result;
 	}
 	/**
@@ -300,6 +303,22 @@ public class TabbedMux.AsyncImpedanceMatcher {
 	public async bool invoke_obj<T> (OperationObj<T> handler, SSH2.Channel? channel = null, SSH2.Error suppression = SSH2.Error.NONE) throws IOError {
 		return yield invoke ((s, c) => handler (s, c) != null ? SSH2.Error.NONE : s.last_error, channel, suppression);
 	}
+
+	public async void close_channel(SSH2.Channel channel) throws IOError {
+		yield invoke((s, c) => c.wait_closed (), channel);
+
+		if (channel.exit_status > 0) {
+			throw new IOError.CLOSED (@"Remote TMux terminated with $(channel.exit_status).");
+		}
+		char[]? error_message = null;
+		char[]? signal_name = null;
+		char[]? language_tag = null;
+		if (channel.get_exit_signal (out signal_name, out error_message, out language_tag) == SSH2.Error.NONE && signal_name != null) {
+			throw new IOError.CLOSED (@"Remote TMux caught signal $((string) signal_name).");
+		}
+		message("%s:%s:%s", (string)error_message, (string)signal_name, (string)language_tag);
+	}
+
 	/**
 	 * Glue libssh2 to GLib's event loop.
 	 *
@@ -347,19 +366,8 @@ public class TabbedMux.AsyncImpedanceMatcher {
 		if (channel != null && result != SSH2.Error.NONE) {
 			char[]? error_message = null;
 			session.get_last_error (out error_message);
-			if (channel.eof () != 0 && channel.wait_closed () != SSH2.Error.NONE) {
-				throw new IOError.CLOSED (@"Unable to close channel.");
-			}
 			if (error_message != null) {
 				throw new IOError.FAILED ((string) error_message);
-			}
-			if (channel.exit_status > 0) {
-				throw new IOError.CLOSED (@"Remote TMux terminated with $(channel.exit_status).");
-			}
-			char[]? signal_name;
-			char[]? language_tag;
-			if (channel.get_exit_signal (out signal_name, out error_message, out language_tag) == SSH2.Error.NONE && signal_name != null) {
-				throw new IOError.CLOSED (@"Remote TMux caught signal $((string) signal_name).");
 			}
 		}
 
