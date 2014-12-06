@@ -427,6 +427,9 @@ namespace TabbedMux {
 			while ((new_line = search_buffer (buffer)) < 0) {
 				try {
 					var length = yield read (data);
+					if (length == 0) {
+						return null;
+					}
 					buffer.append_len ((string) data, length);
 				} catch (IOError.CANCELLED e) {
 					if (die_on_cancel) {
