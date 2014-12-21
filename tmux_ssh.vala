@@ -100,7 +100,7 @@ internal class TabbedMux.TMuxSshStream : TMuxStream {
 		 */
 		busy_dialog.message = @"Connecting to '$(session_name)' on $(username)@$(host):$(port)...";
 		var client = new SocketClient ();
-		var connection = yield client.connect_to_host_async (host, port);
+		var connection = yield client.connect_to_host_async (host, port, busy_dialog.cancellable);
 
 		/*
 		 * Try to set no delay.
