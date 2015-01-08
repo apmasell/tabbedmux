@@ -7,7 +7,6 @@ public class KeyboardInteractiveDialog : Gtk.Dialog {
 		add_button ("Ok", 0);
 		var ok_button = get_widget_for_response (0);
 		ok_button.can_default = true;
-		ok_button.grab_default ();
 	}
 	public void respond (string instruction, SSH2.keyboard_prompt[] prompts, SSH2.keyboard_response[] responses) {
 		var entries = new Gtk.Entry[] {};
@@ -20,7 +19,12 @@ public class KeyboardInteractiveDialog : Gtk.Dialog {
 			grid.attach (new Gtk.Label ((string) prompts[it].text), 0, it + 1, 1, 1);
 			var entry = new Gtk.Entry ();
 			entry.visibility = prompts[it].echo;
-			entry.activates_default = true;
+			if (it == 0) {
+				entry.grab_default ();
+			}
+			if (it == prompts.length - 1) {
+				entry.activates_default = true;
+			}
 			grid.attach (entry, 1, it + 1, 1, 1);
 			entries += entry;
 		}
