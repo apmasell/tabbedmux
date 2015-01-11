@@ -1,3 +1,14 @@
+tabbedmux (1.15~ppa0) trusty; urgency=medium
+
+  * Fix bug where border is slightly too large
+  * Try to do more sensible focusing in password dialog
+  * Attach cancellable to initial connection
+  * Use GLib's memory manager in libssh2
+  * Refactor SSH channel close logic
+  * Exit when end of file is reached
+
+ -- Andre Masella <andre@masella.name>  Sun, 11 Jan 2015 08:58:05 -0500
+
 tabbedmux (1.14~ppa1) trusty; urgency=medium
 
   * Avoid reentering the exec queue
