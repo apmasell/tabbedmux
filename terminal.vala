@@ -181,8 +181,8 @@ public class TabbedMux.Terminal : Gtk.Box {
 	public void resize_tmux () {
 		unowned Gtk.Border? border;
 		terminal.style_get ("inner-border", out border);
-		long width = (get_allocated_width () - (border == null ? 0 : ((!)border).left)) / terminal.get_char_width ();
-		long height = (get_allocated_height () - (border == null ? 0 : ((!)border).top)) / terminal.get_char_height ();
+		long width = (get_allocated_width () - (border == null ? 0 : ((!)border).left + ((!)border).right)) / terminal.get_char_width ();
+		long height = (get_allocated_height () - (border == null ? 0 : ((!)border).top + ((!)border).bottom)) / terminal.get_char_height ();
 		if (width > 10 && height > 10) {
 			tmux_window.resize ((int) width, (int) height);
 		}
