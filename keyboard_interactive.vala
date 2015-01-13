@@ -3,10 +3,9 @@
  */
 public class KeyboardInteractiveDialog : Gtk.Dialog {
 	public KeyboardInteractiveDialog (Gtk.Window parent, string host) {
-		Object (title: @"Connect $(host)...", transient_for: parent);
+		Object (title: @"Connect $(host)...", transient_for: parent, modal: true);
 		add_button ("Ok", 0);
-		var ok_button = get_widget_for_response (0);
-		ok_button.can_default = true;
+		set_default_response(0);
 	}
 	public void respond (string instruction, SSH2.keyboard_prompt[] prompts, SSH2.keyboard_response[] responses) {
 		var entries = new Gtk.Entry[] {};
