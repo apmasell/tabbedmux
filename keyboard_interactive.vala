@@ -8,7 +8,7 @@ public class KeyboardInteractiveDialog : Gtk.Dialog {
 		set_default_response(0);
 	}
 	public void respond (string instruction, SSH2.keyboard_prompt[] prompts, SSH2.keyboard_response[] responses) {
-		var entries = new Gtk.Entry[] {};
+		var entries = new Gtk.Entry[prompts.length];
 		var box = get_content_area ();
 		var grid = new Gtk.Grid ();
 		box.add (grid);
@@ -25,7 +25,7 @@ public class KeyboardInteractiveDialog : Gtk.Dialog {
 				entry.activates_default = true;
 			}
 			grid.attach (entry, 1, it + 1, 1, 1);
-			entries += entry;
+			entries[it] = entry;
 		}
 		show_all ();
 		run ();
