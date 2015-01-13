@@ -34,6 +34,6 @@ public class KeyboardInteractiveDialog : Gtk.Dialog {
 			responses[it].text = entries[it].text.data;
 		}
 		get_content_area ().remove (grid);
-		destroy ();
+		hide ();
 	}
 }

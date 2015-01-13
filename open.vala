@@ -85,8 +85,8 @@ public class TabbedMux.OpenDialog : Gtk.Dialog {
 				}
 
 				/* Create a handler for the password/prompts. */
-				var keybd_dialog = new KeyboardInteractiveDialog (this, host.text);
 				var busy_dialog = new BusyDialog (this);
+				var keybd_dialog = new KeyboardInteractiveDialog (busy_dialog, host.text);
 				busy_dialog.show ();
 				TMuxSshStream.open.begin (session_name, host.text, (uint16) port_number, username, tmux_binary, keybd_dialog.respond, busy_dialog, (sender, result) => {
 								  try {
@@ -100,6 +100,7 @@ public class TabbedMux.OpenDialog : Gtk.Dialog {
 								  } catch (Error e) {
 									  show_error (this, e.message);
 								  }
+								  keybd_dialog.destroy ();
 								  busy_dialog.destroy ();
 							  });
 			} else {
