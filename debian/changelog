@@ -1,3 +1,12 @@
+tabbedmux (1.16~ppa0) trusty; urgency=medium
+
+  * When doing password authentication, prompt the user multiple times
+  * Add overload detector
+  * Fix broken cancel button during connect
+  * Improve password dialog
+
+ -- Andre Masella <andre@masella.name>  Wed, 21 Jan 2015 21:45:09 -0500
+
 tabbedmux (1.15~ppa0) trusty; urgency=medium
 
   * Fix bug where border is slightly too large
