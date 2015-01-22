@@ -186,14 +186,15 @@ internal class TabbedMux.TMuxSshStream : TMuxStream {
 					 break;
 				 }
 				 busy_dialog.message = @"Trying password authentication for '$(session_name)' on $(username)@$(host):$(port)...";
-				 var password = password_simple ("Enter password:", (!)get_password);
-				 if (password == null) {
-					 break;
-				 }
 				 var attempts = 0;
-				 while ((yield matcher.invoke ((s, c) => s.auth_password (username, (!)password), null, SSH2.Error.AUTHENTICATION_FAILED)) && attempts < 3) {
+				 string? password = null;
+				 do {
+					 password = password_simple ("Enter password:", (!)get_password);
+					 if (password == null) {
+						 break;
+					 }
 					 attempts++;
-				 }
+				 } while ((yield matcher.invoke ((s, c) => s.auth_password (username, (!)password), null, SSH2.Error.AUTHENTICATION_FAILED)) && attempts < 3);
 				 break;
 
 			 default :
