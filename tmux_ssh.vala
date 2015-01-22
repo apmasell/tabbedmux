@@ -274,17 +274,25 @@ internal class TabbedMux.TMuxSshStream : TMuxStream {
  * Wrapper to control how libssh2 and GLib interact.
  */
 public class TabbedMux.AsyncImpedanceMatcher {
-	public delegate SSH2.Error Operation (SSH2.Session<void *> session, SSH2.Channel? channel);
-	public delegate ssize_t OperationSsize_t (SSH2.Session<void *> session, SSH2.Channel? channel);
-	public delegate unowned T? OperationObj<T> (SSH2.Session<void *> session, SSH2.Channel? channel);
+	public delegate SSH2.Error Operation (SSH2.Session<unowned AsyncImpedanceMatcher> session, SSH2.Channel? channel);
+	public delegate ssize_t OperationSsize_t (SSH2.Session<unowned AsyncImpedanceMatcher> session, SSH2.Channel? channel);
+	public delegate unowned T? OperationObj<T> (SSH2.Session<unowned AsyncImpedanceMatcher> session, SSH2.Channel? channel);
 
-	public SSH2.Session<void *> session = SSH2.Session.create<void *> ();
+	private SSH2.Disconnect disconnect_reason = 0;
+
+	private static void disconnect_handler (SSH2.Session<unowned AsyncImpedanceMatcher> session, SSH2.Disconnect reason, uint8[] msg, uint8[] language, ref unowned AsyncImpedanceMatcher user_data) {
+		message ("Disconnect: %s", (string) msg);
+		user_data.disconnect_reason = reason;
+		user_data.cancellable.cancel ();
+	}
+	public SSH2.Session<unowned AsyncImpedanceMatcher> session;
 	public Socket socket;
 	public Cancellable? cancellable;
 	public AsyncImpedanceMatcher (Socket socket) {
 		this.socket = socket;
+		session = SSH2.Session.create<unowned AsyncImpedanceMatcher> (this);
 		session.blocking = false;
-		session.set_disconnect_handler ((session, reason, msg, language, ref user_data) => message ("Disconnect: %s", (string) msg));
+		session.set_disconnect_handler (disconnect_handler);
 	}
 	/**
 	 * Call a method that returns a ssize_t, which will be negative on error, or positive on success.
@@ -376,6 +384,9 @@ public class TabbedMux.AsyncImpedanceMatcher {
 			/* Some error in the underlying socket. */
 			int no = errno;
 			throw_errno (no);
+		}
+		if (disconnect_reason != 0) {
+			throw new IOError.CLOSED ("Server disconnected.");
 		}
 
 		if (result != SSH2.Error.NONE) {
