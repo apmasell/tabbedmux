@@ -1,3 +1,9 @@
+tabbedmux (1.16~ppa1) trusty; urgency=medium
+
+  * Fix rate constant and make it modifiable
+
+ -- Andre Masella <andre@masella.name>  Wed, 21 Jan 2015 22:06:01 -0500
+
 tabbedmux (1.16~ppa0) trusty; urgency=medium
 
   * When doing password authentication, prompt the user multiple times
