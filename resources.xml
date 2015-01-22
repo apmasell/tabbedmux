@@ -3,6 +3,7 @@
   <gresource prefix="/name/masella/tabbedmux">
     <file compressed="true" preprocess="xml-stripblanks">busy.ui</file>
     <file compressed="true" preprocess="xml-stripblanks">open.ui</file>
+    <file compressed="true" preprocess="xml-stripblanks">overload_widget.ui</file>
     <file compressed="true" preprocess="xml-stripblanks">window.ui</file>
   </gresource>
 </gresources>

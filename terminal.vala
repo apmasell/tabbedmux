@@ -17,6 +17,8 @@ public class TabbedMux.Terminal : Gtk.Box {
 		get; private set; default = new Gtk.Label ("New Session");
 	}
 	public static Regex? uri_regex;
+	private Gtk.Overlay overlay = new Gtk.Overlay ();
+	private OverloadWidget overload = new OverloadWidget ();
 	private const string X_SCHEME_HANDLER = "x-scheme-handler/";
 	class construct {
 		var buffer = new StringBuilder ();
@@ -73,8 +75,12 @@ public class TabbedMux.Terminal : Gtk.Box {
 
 		/* Put the terminal in a box in this box. This ensure that the terminal can have both vertical and horizontal free padding*/
 		var innerbox = new Gtk.Box (Gtk.Orientation.HORIZONTAL, 0);
-		innerbox.pack_start (terminal, false);
+		innerbox.pack_start (overlay, false);
 		pack_start (innerbox, false);
+		overlay.add (terminal);
+
+		overload.send_ctrl_c.connect (unowned_this.send_ctrl_c_to_tmux);
+		tmux_window.notify["overloaded"].connect (unowned_this.overloaded_changed);
 
 		/* Wire all the TMux events */
 		tmux_window.renamed.connect (unowned_this.update_tab_label);
@@ -142,6 +148,21 @@ public class TabbedMux.Terminal : Gtk.Box {
 		adjust_font (false);
 	}
 
+	private void overloaded_changed (Object source, ParamSpec name) {
+		message ("Changed overload to %s.", tmux_window.overloaded.to_string ());
+		if (tmux_window.overloaded) {
+			overlay.add_overlay (overload);
+			overlay.show_all ();
+		} else {
+			overlay.remove (overload);
+			overlay.show_all ();
+		}
+	}
+
+	private void send_ctrl_c_to_tmux () {
+		tmux_window.tx_data ("\x03".data);
+	}
+
 	public void adjust_font (bool increase) {
 		var font = terminal.font_desc;
 		font.set_size (font.get_size () + Pango.SCALE * (increase ? 1 : -1));
@@ -207,5 +228,15 @@ public class TabbedMux.Terminal : Gtk.Box {
 		} else {
 			tab_label.override_font (null);
 		}
+	}
+}
+
+[GtkTemplate (ui = "/name/masella/tabbedmux/overload_widget.ui")]
+public class TabbedMux.OverloadWidget : Gtk.AspectFrame {
+
+	public signal void send_ctrl_c ();
+	[GtkCallback]
+	private void on_clicked () {
+		send_ctrl_c ();
 	}
 }
