@@ -18,9 +18,6 @@ public class KeyboardInteractiveDialog : Gtk.Dialog {
 			grid.attach (new Gtk.Label ((string) prompts[it].text), 0, it + 1, 1, 1);
 			var entry = new Gtk.Entry ();
 			entry.visibility = prompts[it].echo;
-			if (it == 0) {
-				entry.grab_default ();
-			}
 			if (it == prompts.length - 1) {
 				entry.activates_default = true;
 			}
