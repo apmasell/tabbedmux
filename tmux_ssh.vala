@@ -292,7 +292,7 @@ public class TabbedMux.AsyncImpedanceMatcher {
 		ssize_t result = 0;
 		yield invoke ((s, c) => (result = handler (s, c)) > 0 ? SSH2.Error.NONE : (SSH2.Error)result, channel);
 		if (result == 0 && channel != null) {
-			yield close_channel(channel);
+			yield close_channel (channel);
 		}
 		return result;
 	}
@@ -304,8 +304,8 @@ public class TabbedMux.AsyncImpedanceMatcher {
 		return yield invoke ((s, c) => handler (s, c) != null ? SSH2.Error.NONE : s.last_error, channel, suppression);
 	}
 
-	public async void close_channel(SSH2.Channel channel) throws IOError {
-		yield invoke((s, c) => c.wait_closed (), channel);
+	public async void close_channel (SSH2.Channel channel) throws IOError {
+		yield invoke ((s, c) => c.wait_closed (), channel);
 
 		if (channel.exit_status > 0) {
 			throw new IOError.CLOSED (@"Remote TMux terminated with $(channel.exit_status).");
@@ -316,7 +316,7 @@ public class TabbedMux.AsyncImpedanceMatcher {
 		if (channel.get_exit_signal (out signal_name, out error_message, out language_tag) == SSH2.Error.NONE && signal_name != null) {
 			throw new IOError.CLOSED (@"Remote TMux caught signal $((string) signal_name).");
 		}
-		message("%s:%s:%s", (string)error_message, (string)signal_name, (string)language_tag);
+		message ("%s:%s:%s", (string) error_message, (string) signal_name, (string) language_tag);
 	}
 
 	/**
@@ -344,7 +344,7 @@ public class TabbedMux.AsyncImpedanceMatcher {
 			source = socket.create_source (session.block_directions.to_condition (), cancellable);
 			((!)source).set_callback ((socket, condition) => { async_continue (); return false; });
 
-			/* Perform an obligatory SSH keep-alive.  */
+			/* Perform an obligatory SSH keep-alive. */
 			int seconds_to_next;
 			if ((result = session.send_keep_alive (out seconds_to_next)) != SSH2.Error.NONE) {
 				warning ("SSH keep-alive failed!");
