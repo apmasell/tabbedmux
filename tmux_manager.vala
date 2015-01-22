@@ -1,5 +1,7 @@
 namespace TabbedMux {
 	public const string TERM_TYPE = "xterm";
+	private const double DECAY_CONSTANT = 0.4;
+	private const double MAX_DATA_RATE = 10;
 	private extern async void wait_idle ();
 
 	/**
@@ -389,7 +391,11 @@ namespace TabbedMux {
 						 if (windows.has_key (window_id)) {
 							 var window = windows[window_id];
 							 var text = decoder.get_remainder ();
-							 window.rx_data (text.data);
+							 window.update_data_rate (text.length);
+
+							 if (!window.overloaded) {
+								 window.rx_data (text.data);
+							 }
 						 }
 						 break;
 
@@ -488,6 +494,16 @@ namespace TabbedMux {
 		public string title {
 			get; internal set; default = "unknown";
 		}
+		/**
+		 * If the terminal is being saturated by too much output, probably due to
+		 * dumping some large file to the terminal, the overloaded indicator will
+		 * turn on and rx_data will stop firing.
+		 */
+		public bool overloaded {
+			get; private set;
+		}
+		private double data_rate = 0;
+		private int64 last_output_time = get_monotonic_time ();
 
 		internal TMuxWindow (TMuxStream stream, int id) {
 			this.stream = stream;
@@ -590,6 +606,20 @@ namespace TabbedMux {
 				return;
 			}
 			stream.attempt_command (@"refresh-client -C $(width),$(height)");
+		}
+
+		/*
+		 * Determine if we are overloaded and do something about it.
+		 */
+		internal void update_data_rate (int payload_size) {
+			var current_time = get_monotonic_time ();
+			data_rate = DECAY_CONSTANT * payload_size / (current_time - last_output_time) + (1.0 - DECAY_CONSTANT) * data_rate;
+			last_output_time = current_time;
+			if (overloaded && data_rate < MAX_DATA_RATE) {
+				overloaded = false;
+			} else if (!overloaded && data_rate > MAX_DATA_RATE) {
+				overloaded = true;
+			}
 		}
 
 		/**
