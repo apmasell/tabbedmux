@@ -91,6 +91,7 @@ public class TabbedMux.Window : Gtk.ApplicationWindow {
 
 		settings = new Settings (application.application_id);
 		settings.changed.connect (TMuxWindow.update_settings);
+		TMuxWindow.update_settings (settings, null);
 
 		font_chooser = new Gtk.FontChooserDialog ("Terminal Font", this);
 		font_chooser.set_filter_func (is_monospace_font);

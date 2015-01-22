@@ -274,6 +274,11 @@ namespace TabbedMux {
 									  window.title = title;
 									  window.renamed ();
 								  }
+									/*
+									 * If we are in overload, getting a title might indicate
+									 * things have calmed down.
+									 */
+									window.update_data_rate (0);
 								  break;
 
 							  case NextOutput.WINDOW_SIZE:
@@ -469,24 +474,13 @@ namespace TabbedMux {
 	 * A window on the TMux instance, contained in a session.
 	 */
 	public class TMuxWindow : Object {
-		public static void update_settings (Settings sender, string key) {
-			switch (key) {
-				case "decay-constant":
-					decay_constant = sender.get_double (key);
-					message ("New decay constant: %f", decay_constant);
-					break;
-				case "max-data-rate":
-					max_data_rate = sender.get_double (key);
-					message ("New maxium data rate: %f", max_data_rate);
-					break;
-				default:
-					break;
+		private const string MAX_DATA_RATE_KEY = "max-data-rate";
+		public static void update_settings (Settings sender, string? key) {
+			if (key == null || key == MAX_DATA_RATE_KEY) {
+				max_data_rate = sender.get_double (MAX_DATA_RATE_KEY);
+				message ("New maximum data rate: %f", max_data_rate);
 			}
 		}
-		/**
-		 * The decay rate for new data.
-		 */
-		public static double decay_constant { get; set; default = 0.4; }
 		/**
 		 * The maximum output rate from the console before overload is triggered.
 		 */
@@ -522,7 +516,8 @@ namespace TabbedMux {
 		public bool overloaded {
 			get; private set;
 		}
-		private double data_rate = 0;
+		private double updates[1000];
+		private int update_index = 0;
 		private int64 last_output_time = get_monotonic_time ();
 
 		internal TMuxWindow (TMuxStream stream, int id) {
@@ -633,13 +628,43 @@ namespace TabbedMux {
 		 */
 		internal void update_data_rate (int payload_size) {
 			var current_time = get_monotonic_time ();
-			var alpha = decay_constant.clamp(0, 1);
-			data_rate = alpha * payload_size / (current_time - last_output_time) + (1.0 - alpha) * data_rate;
-			last_output_time = current_time;
-			if (overloaded && data_rate < max_data_rate) {
-				overloaded = false;
-			} else if (!overloaded && data_rate > max_data_rate) {
-				overloaded = true;
+
+			var adjusted_payload = payload_size * 1.0 / int.max (width * height, 24 * 80);
+			var update_size = int.min((int)((current_time - last_output_time) / 2e6 * updates.length), updates.length);
+			if (update_size < 1) {
+				updates[update_index] += adjusted_payload;
+				/* Do not update time. */
+			} else {
+				updates[update_index] += adjusted_payload / update_size;
+				for (var it = 1; it < update_size; it++) {
+					updates[(update_index - it + updates.length) % updates.length] = adjusted_payload / update_size;
+				}
+				last_output_time = current_time;
+				update_index = (update_index + update_size) % updates.length;
+			}
+
+			/*
+			 * Determine if we are in an overload state. This decision has
+			 * hysteresis, so if the console has been quiet for the past little
+			 * while, the output has probably stopped.
+			 */
+			if (overloaded) {
+				double cumulative_sum = 0;
+				for (var it = 0; it < updates.length / 4; it++) {
+					cumulative_sum += updates[(update_index + it) % updates.length];
+				}
+				if (cumulative_sum * 4 < max_data_rate) {
+					overloaded = false;
+				}
+			} else {
+				double cumulative_sum = 0;
+				foreach (var data in updates) {
+					cumulative_sum += data;
+				}
+				if (cumulative_sum > max_data_rate) {
+					message ("Overloaded at %f.", cumulative_sum);
+					overloaded = true;
+				}
 			}
 		}
 

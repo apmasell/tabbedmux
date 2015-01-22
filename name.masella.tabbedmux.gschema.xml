@@ -32,14 +32,9 @@
       <description>The typeface used for the terminal window.</description>
     </key>
     <key name="max-data-rate" type="d">
-      <default>20</default>
-      <summary>Maximum data rate (B/µs or MB/s).</summary>
-      <description>The maximum rate at which data can be blasted at the terminal before it will go into overload mode.</description>
-    </key>
-    <key name="decay-constant" type="d">
-      <default>0.4</default>
-      <summary>The proportion for which the current sample affects the effective data rate.</summary>
-      <description>The maximum data rate is computed by taking a weighted mean between the current instantaneous data rate and the previous data rate. This constant determines the relative importance of those two rates.</description>
+      <default>30</default>
+      <summary>Maximum character update rate (average updates to a single character in a 2 second window).</summary>
+      <description>The maximum rate at which data can be blasted at the terminal before it will go into overload mode. Larger screens will require more updates, so this looks at the average frequency with which an average character on the screen is redrawn by the terminal. The best calibration is to scroll maniacally through a large man page.</description>
     </key>
   </schema>
 </schemalist>
