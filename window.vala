@@ -90,6 +90,7 @@ public class TabbedMux.Window : Gtk.ApplicationWindow {
 		clipboard =  Gtk.Clipboard.get_for_display (get_display (), Gdk.SELECTION_CLIPBOARD);
 
 		settings = new Settings (application.application_id);
+		settings.changed.connect (TMuxWindow.update_settings);
 
 		font_chooser = new Gtk.FontChooserDialog ("Terminal Font", this);
 		font_chooser.set_filter_func (is_monospace_font);

@@ -1,7 +1,5 @@
 namespace TabbedMux {
 	public const string TERM_TYPE = "xterm";
-	private const double DECAY_CONSTANT = 0.4;
-	private const double MAX_DATA_RATE = 10;
 	private extern async void wait_idle ();
 
 	/**
@@ -471,6 +469,28 @@ namespace TabbedMux {
 	 * A window on the TMux instance, contained in a session.
 	 */
 	public class TMuxWindow : Object {
+		public static void update_settings (Settings sender, string key) {
+			switch (key) {
+				case "decay-constant":
+					decay_constant = sender.get_double (key);
+					message ("New decay constant: %f", decay_constant);
+					break;
+				case "max-data-rate":
+					max_data_rate = sender.get_double (key);
+					message ("New maxium data rate: %f", max_data_rate);
+					break;
+				default:
+					break;
+			}
+		}
+		/**
+		 * The decay rate for new data.
+		 */
+		public static double decay_constant { get; set; default = 0.4; }
+		/**
+		 * The maximum output rate from the console before overload is triggered.
+		 */
+		public static double max_data_rate { get; set; default = 20; }
 		private int id;
 		public unowned TMuxStream stream {
 			get; private set;
@@ -613,11 +633,12 @@ namespace TabbedMux {
 		 */
 		internal void update_data_rate (int payload_size) {
 			var current_time = get_monotonic_time ();
-			data_rate = DECAY_CONSTANT * payload_size / (current_time - last_output_time) + (1.0 - DECAY_CONSTANT) * data_rate;
+			var alpha = decay_constant.clamp(0, 1);
+			data_rate = alpha * payload_size / (current_time - last_output_time) + (1.0 - alpha) * data_rate;
 			last_output_time = current_time;
-			if (overloaded && data_rate < MAX_DATA_RATE) {
+			if (overloaded && data_rate < max_data_rate) {
 				overloaded = false;
-			} else if (!overloaded && data_rate > MAX_DATA_RATE) {
+			} else if (!overloaded && data_rate > max_data_rate) {
 				overloaded = true;
 			}
 		}
