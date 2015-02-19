@@ -1,3 +1,9 @@
+tabbedmux (1.17~ppa0) trusty; urgency=medium
+
+  * Use a rolling window for overload detection 
+
+ -- Andre Masella <andre@masella.name>  Wed, 18 Feb 2015 19:29:20 -0500
+
 tabbedmux (1.16~ppa1) trusty; urgency=medium
 
   * Fix rate constant and make it modifiable
