@@ -630,7 +630,7 @@ namespace TabbedMux {
 			var current_time = get_monotonic_time ();
 
 			var adjusted_payload = payload_size * 1.0 / int.max (width * height, 24 * 80);
-			var update_size = int.min((int)((current_time - last_output_time) / 2e6 * updates.length), updates.length);
+			var update_size = int.min((int)((current_time - last_output_time) / 4e6 * updates.length), updates.length);
 			if (update_size < 1) {
 				updates[update_index] += adjusted_payload;
 				/* Do not update time. */

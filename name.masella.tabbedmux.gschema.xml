@@ -33,7 +33,7 @@
     </key>
     <key name="max-data-rate" type="d">
       <default>30</default>
-      <summary>Maximum character update rate (average updates to a single character in a 2 second window).</summary>
+      <summary>Maximum character update rate (average updates to a single character in a 4 second window).</summary>
       <description>The maximum rate at which data can be blasted at the terminal before it will go into overload mode. Larger screens will require more updates, so this looks at the average frequency with which an average character on the screen is redrawn by the terminal. The best calibration is to scroll maniacally through a large man page.</description>
     </key>
   </schema>
