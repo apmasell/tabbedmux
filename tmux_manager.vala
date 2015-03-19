@@ -694,7 +694,9 @@ namespace TabbedMux {
 					}
 					command.printf ("send-keys -t @%d", id);
 				}
-				command.append_printf (" 0x%02x", text[it]);
+				if (text[it] != '\0') {
+					command.append_printf (" 0x%02x", text[it]);
+				}
 			}
 			stream.attempt_command (command.str);
 		}
