@@ -1,3 +1,10 @@
+tabbedmux (1.18~ppa0) trusty; urgency=medium
+
+  * Don't sent null when Ctrl-Space is typed
+  * Allow pasting selection from menu
+
+ -- Andre Masella <andre@masella.name>  Mon, 27 Jul 2015 20:57:11 -0400
+
 tabbedmux (1.17~ppa0) trusty; urgency=medium
 
   * Use a rolling window for overload detection 
