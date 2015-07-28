@@ -196,6 +196,12 @@ public class TabbedMux.Terminal : Gtk.Box {
 		return terminal.match_check (x_pos, y_pos, out tag);
 	}
 
+	public void paste_text (Gtk.Clipboard sender, string? text) {
+		if (text != null) {
+			tmux_window.paste_text ((!)text);
+		}
+	}
+
 	/**
 	 * Resize the remote TMux window based on the size of the box holding the VTE session.
 	 */

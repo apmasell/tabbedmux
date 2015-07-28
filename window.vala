@@ -77,6 +77,7 @@ public class TabbedMux.Window : Gtk.ApplicationWindow {
 	private Settings settings;
 	private uint configure_id;
 	private Gtk.Clipboard clipboard;
+	private Gtk.Clipboard clipboard_selection;
 
 	private Gtk.FontChooserDialog font_chooser;
 
@@ -88,6 +89,7 @@ public class TabbedMux.Window : Gtk.ApplicationWindow {
 		add_events (Gdk.EventMask.STRUCTURE_MASK | Gdk.EventMask.SUBSTRUCTURE_MASK);
 
 		clipboard =  Gtk.Clipboard.get_for_display (get_display (), Gdk.SELECTION_CLIPBOARD);
+		clipboard_selection =  Gtk.Clipboard.get_for_display (get_display (), Gdk.SELECTION_PRIMARY);
 
 		settings = new Settings (application.application_id);
 		settings.changed.connect (TMuxWindow.update_settings);
@@ -495,13 +497,18 @@ public class TabbedMux.Window : Gtk.ApplicationWindow {
 
 	[GtkCallback]
 	private void on_paste () {
+		paste_clipboard (clipboard);
+	}
+
+	[GtkCallback]
+	private void on_paste_selection () {
+		paste_clipboard (clipboard_selection);
+	}
+
+	private void paste_clipboard (Gtk.Clipboard clipboard) {
 		var widget = notebook.get_nth_page (notebook.page) as Terminal;
 		if (widget != null) {
-			var tmux_window = ((!)widget).tmux_window;
-			var text = clipboard.wait_for_text ();
-			if (text != null) {
-				tmux_window.paste_text ((!)text);
-			}
+			clipboard.request_text (((!)widget).paste_text);
 		}
 	}
 

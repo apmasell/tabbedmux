@@ -189,6 +189,16 @@
                       </object>
                     </child>
                     <child>
+                      <object class="GtkImageMenuItem" id="paste_selection_item">
+                        <property name="label" translatable="yes">Paste Selection</property>
+                        <property name="visible">True</property>
+                        <property name="can_focus">False</property>
+                        <property name="use_underline">True</property>
+                        <property name="use_stock">False</property>
+                        <signal name="activate" handler="on_paste_selection" object="TabbedMuxWindow" swapped="no"/>
+                      </object>
+                    </child>
+                    <child>
                       <object class="GtkImageMenuItem" id="paste_tmux_item">
                         <property name="label" translatable="yes">Paste TMux buffer</property>
                         <property name="visible">True</property>
