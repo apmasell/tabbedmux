@@ -274,11 +274,11 @@ namespace TabbedMux {
 									  window.title = title;
 									  window.renamed ();
 								  }
-									/*
-									 * If we are in overload, getting a title might indicate
-									 * things have calmed down.
-									 */
-									window.update_data_rate (0);
+								  /*
+								   * If we are in overload, getting a title might indicate
+								   * things have calmed down.
+								   */
+								  window.update_data_rate (0);
 								  break;
 
 							  case NextOutput.WINDOW_SIZE:
@@ -484,7 +484,9 @@ namespace TabbedMux {
 		/**
 		 * The maximum output rate from the console before overload is triggered.
 		 */
-		public static double max_data_rate { get; set; default = 20; }
+		public static double max_data_rate {
+			get; set; default = 20;
+		}
 		private int id;
 		public unowned TMuxStream stream {
 			get; private set;
@@ -566,7 +568,7 @@ namespace TabbedMux {
 			buffer.append ("set-buffer \"");
 			for (var it = 0; it < text.length; it++) {
 				switch (text[it]) {
-				 case '\n':
+				 case '\n' :
 					 buffer.append_c ('\r');
 					 break;
 
@@ -630,7 +632,7 @@ namespace TabbedMux {
 			var current_time = get_monotonic_time ();
 
 			var adjusted_payload = payload_size * 1.0 / int.max (width * height, 24 * 80);
-			var update_size = int.min((int)((current_time - last_output_time) / 4e6 * updates.length), updates.length);
+			var update_size = int.min ((int) ((current_time - last_output_time) / 4e6 * updates.length), updates.length);
 			if (update_size < 1) {
 				updates[update_index] += adjusted_payload;
 				/* Do not update time. */
