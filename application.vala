@@ -6,7 +6,12 @@ public class TabbedMux.Application : Gtk.Application {
 	internal SavedSessions saved_sessions;
 
 	protected override void activate () {
-		new Window (this).show_all ();
+		unowned List<weak Gtk.Window>? windows = get_windows ();
+		if (windows == null) {
+			new Window (this).show_all ();
+		} else {
+			windows.data.present ();
+		}
 	}
 
 	internal Application () {
