@@ -68,8 +68,11 @@ internal class TabbedMux.TMuxSshStream : TMuxStream {
 
 		var attempts = 0;
 		string? password = null;
-		var public_key = @"$(Environment.get_home_dir())/.ssh/id_rsa.pub";
 		var private_key = @"$(Environment.get_home_dir())/.ssh/id_rsa";
+		var public_key = private_key + ".pub";
+		if (!FileUtils.test (public_key, FileTest.EXISTS) || !FileUtils.test (private_key, FileTest.EXISTS)) {
+			return;
+		}
 		yield matcher.invoke ((s, c) => {
 					      var result = s.auth_publickey_from_file (username, public_key, private_key, password);
 					      if (result == SSH2.Error.PUBLICKEY_UNVERIFIED) {
