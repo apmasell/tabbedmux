@@ -17,7 +17,7 @@ struct delegate_data {
 	void *original_abstract;
 };
 
-void response_callback(
+static void response_callback(
 	const char *name,
 	int name_len,
 	const char *instruction,
