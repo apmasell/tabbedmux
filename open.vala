@@ -97,6 +97,7 @@ public class TabbedMux.OpenDialog : Gtk.Dialog {
 										  ((Application) application).saved_sessions.append_ssh (session_name, host.text, (uint16) port_number, username, tmux_binary);
 									  }
 									  deal_with_stream (stream);
+								  } catch (IOError.CANCELLED e) {
 								  } catch (Error e) {
 									  show_error (this, e.message);
 								  }
