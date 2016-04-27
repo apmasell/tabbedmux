@@ -1,3 +1,11 @@
+tabbedmux (1.19~ppa0) trusty; urgency=medium
+
+  * Don't show error dialog when cancelling
+  * Check that public and private key files exist before authentication
+  * Only allow one window to be opened
+
+ -- Andre Masella <andre@masella.name>  Tue, 26 Apr 2016 20:23:13 -0400
+
 tabbedmux (1.18~ppa0) trusty; urgency=medium
 
   * Don't sent null when Ctrl-Space is typed
