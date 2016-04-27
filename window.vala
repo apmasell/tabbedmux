@@ -628,6 +628,7 @@ public class TabbedMux.Window : Gtk.ApplicationWindow {
 								    ((!)application).add_stream ((!)stream);
 							    }
 						    }
+					    } catch (IOError.CANCELLED e) {
 					    } catch (Error e) {
 						    show_error (window, e.message);
 					    }

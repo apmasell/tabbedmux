@@ -115,6 +115,7 @@ public class TabbedMux.OpenDialog : Gtk.Dialog {
 				}
 				deal_with_stream (stream);
 			}
+		} catch (IOError.CANCELLED e) {
 		} catch (Error e) {
 			show_error (this, e.message);
 		}
