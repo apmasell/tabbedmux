@@ -346,7 +346,7 @@ public class TabbedMux.AsyncImpedanceMatcher {
 	 */
 	public async bool invoke (Operation handler, SSH2.Channel? channel = null, SSH2.Error suppression = SSH2.Error.NONE) throws IOError {
 		SSH2.Error result = SSH2.Error.NONE;
-		SocketSource? source = null;
+		Source? source = null;
 
 		while (!cancellable.is_cancelled () && (result = handler (session, channel)) == SSH2.Error.AGAIN) {
 			if (source != null) {
@@ -354,7 +354,7 @@ public class TabbedMux.AsyncImpedanceMatcher {
 			}
 			SourceFunc async_continue = invoke.callback;
 			source = socket.create_source (session.block_directions.to_condition (), cancellable);
-			((!)source).set_callback ((socket, condition) => { async_continue (); return false; });
+			((!)source).set_callback (() => { async_continue (); return Source.REMOVE; });
 
 			/* Perform an obligatory SSH keep-alive. */
 			int seconds_to_next;
