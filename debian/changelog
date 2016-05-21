@@ -1,3 +1,10 @@
+tabbedmux (1.20~ppa0) trusty; urgency=medium
+
+  * Improve Connect UI
+  * Suppress more cancellation errors
+
+ -- Andre Masella <andre@masella.name>  Sat, 21 May 2016 07:15:03 -0400
+
 tabbedmux (1.19~ppa0) trusty; urgency=medium
 
   * Don't show error dialog when cancelling

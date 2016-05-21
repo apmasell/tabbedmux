@@ -55,7 +55,6 @@ public class TabbedMux.Terminal : Gtk.Box {
 		tab_label.max_width_chars = tab_label.width_chars + 30;
 
 		/* Set up the VTE terminal. */
-		terminal.emulation = TERM_TYPE;
 		terminal.pointer_autohide = true;
 		terminal.encoding = "UTF-8";
 		var list = new Gtk.TargetList ({});

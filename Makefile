@@ -31,7 +31,7 @@ VALA_PKGS = \
 	--pkg libnotify \
 	--pkg libssh2 \
 	--pkg tcpmisc \
-	--pkg vte-2.90 \
+	--pkg vte-2.91 \
 	$(NULL)
 
 tabbedmux: $(SOURCES) version.h
