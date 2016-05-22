@@ -1,3 +1,9 @@
+tabbedmux (1.20~ppa1) xenial; urgency=medium
+
+  * Release Xenial version
+
+ -- Andre Masella <andre@masella.name>  Sun, 22 May 2016 11:23:20 -0400
+
 tabbedmux (1.20~ppa0) trusty; urgency=medium
 
   * Improve Connect UI
