@@ -1,3 +1,10 @@
+tabbedmux (1.21~ppa0) xenial; urgency=medium
+
+  * Fix crash on SSH connect
+  * Remove warnings about inner-border
+
+ -- Andre Masella <andre@masella.name>  Mon, 23 May 2016 19:11:46 -0400
+
 tabbedmux (1.20~ppa1) xenial; urgency=medium
 
   * Release Xenial version
