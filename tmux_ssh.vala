@@ -346,7 +346,7 @@ public class TabbedMux.AsyncImpedanceMatcher {
 	 */
 	public async bool invoke (Operation handler, SSH2.Channel? channel = null, SSH2.Error suppression = SSH2.Error.NONE) throws IOError {
 		SSH2.Error result = SSH2.Error.NONE;
-		Source? source = null;
+		SocketSource? source = null;
 
 		while (!cancellable.is_cancelled () && (result = handler (session, channel)) == SSH2.Error.AGAIN) {
 			if (source != null) {
