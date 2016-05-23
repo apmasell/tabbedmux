@@ -188,10 +188,8 @@ public class TabbedMux.Terminal : Gtk.Box {
 	 */
 	public string? get_link (long x, long y) {
 		int tag;
-		unowned Gtk.Border? border;
-		terminal.style_get ("inner-border", out border);
-		var x_pos = (x - (border == null ? 0 : ((!)border).left)) / terminal.get_char_width ();
-		var y_pos = (y - (border == null ? 0 : ((!)border).top)) / terminal.get_char_height ();
+		var x_pos = x / terminal.get_char_width ();
+		var y_pos = y / terminal.get_char_height ();
 		return terminal.match_check (x_pos, y_pos, out tag);
 	}
 
@@ -205,10 +203,8 @@ public class TabbedMux.Terminal : Gtk.Box {
 	 * Resize the remote TMux window based on the size of the box holding the VTE session.
 	 */
 	public void resize_tmux () {
-		unowned Gtk.Border? border;
-		terminal.style_get ("inner-border", out border);
-		long width = (get_allocated_width () - (border == null ? 0 : ((!)border).left + ((!)border).right)) / terminal.get_char_width ();
-		long height = (get_allocated_height () - (border == null ? 0 : ((!)border).top + ((!)border).bottom)) / terminal.get_char_height ();
+		long width = get_allocated_width () / terminal.get_char_width ();
+		long height = get_allocated_height () / terminal.get_char_height ();
 		if (width > 10 && height > 10) {
 			tmux_window.resize ((int) width, (int) height);
 		}
