@@ -23,7 +23,7 @@ For Ubuntu 14.04 or later:
 For everyone else:
 
   1. Install the Vala compiler 0.22 or later.
-  2. Install development headers for Gtk+ 3.10, Gee 0.8, Vte 2.90, libnotify, and libssh2 1.4, or newer versions.
+  2. Install development headers for Gtk+ 3.10, Gee 0.8, Vte 2.91, libnotify, and libssh2 1.4, or newer versions.
   3. `make && sudo make install`
   4. Install tmux 1.8 or later on the local system and any remote systems you wish to access.
 
