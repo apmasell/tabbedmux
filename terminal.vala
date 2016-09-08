@@ -193,8 +193,9 @@ public class TabbedMux.Terminal : Gtk.Box {
 	 * Resize the remote TMux window based on the size of the box holding the VTE session.
 	 */
 	public void resize_tmux () {
-		long width = get_allocated_width () / terminal.get_char_width ();
-		long height = get_allocated_height () / terminal.get_char_height ();
+		var border =  terminal.get_style_context ().get_padding (terminal.get_state_flags ());
+		var width = (get_allocated_width () - (border.left +  border.right)) / terminal.get_char_width ();
+		var height  = (get_allocated_height () - (border.top +  border.bottom)) / terminal.get_char_height ();
 		if (width > 10 && height > 10) {
 			tmux_window.resize ((int) width, (int) height);
 		}
