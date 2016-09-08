@@ -98,7 +98,7 @@ public class TabbedMux.Terminal : Gtk.Box {
 	 */
 	private bool vte_button_press_event (Gdk.EventButton event) {
 		if (event.type == Gdk.EventType.BUTTON_PRESS && event.button == 3) {
-			var url = get_link ((long) event.x, (long) event.y);
+			var url = terminal.match_check_event (event, null);
 			if (url != null) {
 				var context_menu = new ContextMenu ((!)url);
 				context_menu.attach_to_widget (terminal, null);
@@ -181,16 +181,6 @@ public class TabbedMux.Terminal : Gtk.Box {
 	 */
 	private void vte_commit (string text, uint size) {
 		tmux_window.tx_data (text.data);
-	}
-
-	/**
-	 * Translate a mouse position in the VTE terminal to row and column, then get the URL in there.
-	 */
-	public string? get_link (long x, long y) {
-		int tag;
-		var x_pos = x / terminal.get_char_width ();
-		var y_pos = y / terminal.get_char_height ();
-		return terminal.match_check (x_pos, y_pos, out tag);
 	}
 
 	public void paste_text (Gtk.Clipboard sender, string? text) {
