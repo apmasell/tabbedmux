@@ -81,7 +81,6 @@ gchar *tabbed_mux_decoder_get_remainder(
 	gchar *p = self->rest;
 	gchar *q;
 	gchar *save = NULL;
-	gint it;
 	gboolean check = FALSE;
 
 	if (self->rest == NULL) {
