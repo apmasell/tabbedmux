@@ -317,6 +317,10 @@ public class TabbedMux.AsyncImpedanceMatcher {
 	}
 
 	public async void close_channel (SSH2.Channel channel) throws IOError {
+		if (channel.eof () == 0) {
+		  yield invoke ((s, c) => c.send_eof (), channel);
+		  yield invoke ((s, c) => c.wait_eof (), channel);
+		}
 		yield invoke ((s, c) => c.wait_closed (), channel);
 
 		if (channel.exit_status > 0) {
