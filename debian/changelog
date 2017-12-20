@@ -1,3 +1,10 @@
+tabbedmux (1.23~ppa0) xenial; urgency=medium
+
+  * Corretly handle $ in pasting
+  * Disconnect more gracefully
+
+ -- Andre Masella <andre@masella.name>  Tue, 19 Dec 2017 21:04:11 -0500
+
 tabbedmux (1.22~ppa0) xenial; urgency=medium
 
   * Fix VTE wrapping/geometry bug
