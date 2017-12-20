@@ -568,6 +568,11 @@ namespace TabbedMux {
 			buffer.append ("set-buffer \"");
 			for (var it = 0; it < text.length; it++) {
 				switch (text[it]) {
+				 case '$' :
+					 buffer.append_c ('\\');
+					 buffer.append_c ('$');
+					 break;
+
 				 case '\n' :
 					 buffer.append_c ('\r');
 					 break;
