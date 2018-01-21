@@ -11,6 +11,8 @@ TabbedMux connects to remote systems using SSH, starts TMux, and creates one tab
 
 Note: window means two different things to Gtk+ and TMux. It's confusing. Sorry.
 
+![screenshot](https://github.com/apmasell/tabbedmux/blob/master/screenshot.png)
+
 INSTALLATION
 ------------
 
