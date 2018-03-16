@@ -549,6 +549,7 @@ namespace TabbedMux {
 		 */
 		public void destroy () {
 			stream.attempt_command (@"kill-window -t @$(id)");
+			closed ();
 		}
 
 		/**
