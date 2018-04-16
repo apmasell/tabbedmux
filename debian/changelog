@@ -1,3 +1,9 @@
+tabbedmux (1.24~ppa0) bionic; urgency=medium
+
+  * Add support for tmux 2.6
+
+ -- Andre Masella <andre@masella.name>  Sun, 15 Apr 2018 20:11:43 -0400
+
 tabbedmux (1.23~ppa0) xenial; urgency=medium
 
   * Corretly handle $ in pasting
