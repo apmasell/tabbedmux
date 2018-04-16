@@ -16,7 +16,7 @@ public class TabbedMux.Terminal : Gtk.Box {
 	public Gtk.Label tab_label {
 		get; private set; default = new Gtk.Label ("New Session");
 	}
-	public static Regex? uri_regex;
+	public static Vte.Regex? uri_regex;
 	private Gtk.Overlay overlay = new Gtk.Overlay ();
 	private OverloadWidget overload = new OverloadWidget ();
 	private const string X_SCHEME_HANDLER = "x-scheme-handler/";
@@ -40,8 +40,8 @@ public class TabbedMux.Terminal : Gtk.Box {
 		buffer.append ("):([A-Za-z0-9_~:/?#@!$&'()*+,;=[\\].-]|%[0-9A-Fa-f][0-9A-Fa-f])+");
 		message ("URL regex: %s", buffer.str);
 		try {
-			uri_regex = new Regex (buffer.str);
-		} catch (RegexError e) {
+			uri_regex = new Vte.Regex.for_match (buffer.str, buffer.len, 0);
+		} catch (Error e) {
 			critical ("Regex error: %s", e.message);
 		}
 	}
@@ -69,8 +69,10 @@ public class TabbedMux.Terminal : Gtk.Box {
 		terminal.increase_font_size.connect (unowned_this.increase_font);
 		terminal.decrease_font_size.connect (unowned_this.decrease_font);
 
-		int id = terminal.match_add_gregex (uri_regex, 0);
-		terminal.match_set_cursor_type (id, Gdk.CursorType.HAND2);
+		if (uri_regex != null) {
+			int id = terminal.match_add_regex (uri_regex, 0);
+			terminal.match_set_cursor_type (id, Gdk.CursorType.HAND2);
+		}
 
 		/* Put the terminal in a box in this box. This ensure that the terminal can have both vertical and horizontal free padding*/
 		var innerbox = new Gtk.Box (Gtk.Orientation.HORIZONTAL, 0);
@@ -102,7 +104,7 @@ public class TabbedMux.Terminal : Gtk.Box {
 			if (url != null) {
 				var context_menu = new ContextMenu ((!)url);
 				context_menu.attach_to_widget (terminal, null);
-				context_menu.popup (null, null, null, event.button, event.time);
+				context_menu.popup_at_pointer (event);
 				return true;
 			}
 		}
@@ -135,7 +137,7 @@ public class TabbedMux.Terminal : Gtk.Box {
 		message ("Updating window name: %s - %s - %s\n", tmux_window.title, tmux_window.stream.session_name, tmux_window.stream.name);
 		tab_label.set_text (tmux_window.title);
 		tab_label.set_tooltip_text (@"$(tmux_window.stream.session_name) - $(tmux_window.stream.name)");
-		queue_draw ();
+		queue_resize ();
 	}
 
 	private void increase_font () {
@@ -202,6 +204,9 @@ public class TabbedMux.Terminal : Gtk.Box {
 	}
 
 	private void set_size_from_tmux () {
+		if (tmux_window.width < 1 ||  tmux_window.height < 1) {
+			return;
+		}
 		message ("Resizing to TMux dimension %dx%d.", tmux_window.width, tmux_window.height);
 		terminal.set_size (tmux_window.width, tmux_window.height);
 		/* Yes, we are creating a positive feedback loop that we expect TMux to resolve. */
@@ -213,13 +218,15 @@ public class TabbedMux.Terminal : Gtk.Box {
 	 * Change the tab label if a window from the same TMux session is selected.
 	 */
 	public void sibling_selected (bool selected) {
-		if (selected) {
-			var description = new Pango.FontDescription ();
-			description.set_weight (Pango.Weight.BOLD);
-			tab_label.override_font (description);
-		} else {
-			tab_label.override_font (null);
+		if (tab_label.attributes == null) {
+			tab_label.attributes = new Pango.AttrList ();
 		}
+		Pango.FontDescription description = new Pango.FontDescription ();
+		if (selected) {
+			description.set_weight (Pango.Weight.BOLD);
+		}
+		Pango.Attribute attr = new Pango.AttrFontDesc (description);
+		tab_label.attributes.change ((owned) attr);
 	}
 }
 
