@@ -18,7 +18,7 @@ namespace TabbedMux {
 	 */
 	private class OutputTodo {
 		internal NextOutput action;
-		internal int id;
+		internal int window_id;
 	}
 
 	private class ExecTodo {
@@ -38,8 +38,7 @@ namespace TabbedMux {
 		protected bool die_on_cancel = false;
 		private Gee.Queue<ExecTodo> exec_queue = new Gee.ArrayQueue<ExecTodo> ();
 		private int id = -1;
-		private int output_num = 1;
-		private Gee.HashMap<int, OutputTodo> outputs = new Gee.HashMap<int, OutputTodo> ();
+		private Gee.LinkedList<OutputTodo> outputs = new Gee.LinkedList<OutputTodo> ();
 		private bool started = false;
 		private Gee.HashMap<int, TMuxWindow> windows = new Gee.HashMap<int, TMuxWindow> ();
 
@@ -57,6 +56,9 @@ namespace TabbedMux {
 			this.name = name;
 			this.session_name = session_name;
 			this.binary = binary;
+			var todo = new OutputTodo ();
+			todo.action = NextOutput.NONE;
+			outputs.offer (todo);
 		}
 
 		/**
@@ -147,11 +149,10 @@ namespace TabbedMux {
 		 * Blast some data at TMux and register a cookie to handle the output.
 		 */
 		internal async void exec (bool allow_dispatch, string command, NextOutput output_type = NextOutput.NONE, int window_id = 0) throws Error {
-			var command_id = ++output_num;
 			var todo = new OutputTodo ();
 			todo.action = output_type;
-			todo.id = window_id;
-			outputs[command_id] = todo;
+			todo.window_id = window_id;
+			outputs.offer (todo);
 			yield write_helper (command.data, allow_dispatch);
 			yield write_helper (new_line, allow_dispatch);
 		}
@@ -202,43 +203,51 @@ namespace TabbedMux {
 					 /*
 					  * TMux sent some kind of data. Find the matching cookie and process the data.
 					  */
-					 case "%begin" :
+					 case "%begin":
 						 var time = decoder.pop_id ();
-						 var output_num = decoder.pop_id ();
-						 NextOutput action = NextOutput.NONE;
-						 int window_id = 0;
-						 if (outputs.has_key (output_num)) {
-							 var todo = outputs[output_num];
-							 outputs.unset (output_num);
-							 action = todo.action;
-							 window_id = todo.id;
-						 }
-						 if (action == NextOutput.CAPTURE && windows.has_key (window_id)) {
+						 OutputTodo todo = outputs.poll ();
+						 if (todo != null && todo.action == NextOutput.CAPTURE && windows.has_key (todo.window_id)) {
 							 /* Before we capture the pane, clear the screen. */
-							 windows[window_id].rx_data ("\033[2J".data);
+							 windows[todo.window_id].rx_data ("\033[2J".data);
 						 }
+						 Gee.Set<int> todie = new Gee.TreeSet<int>();
+						 todie.add_all (windows.keys);
 						 string? output_line;
 						 while ((output_line = yield read_line_async ()) !=  null) {
 							 if (((!)output_line).has_prefix ("%end") || ((!)output_line).has_prefix ("%error")) {
+								 if (todo.action == NextOutput.WINDOWS) {
+									 foreach (var id in todie) {
+										 TMuxWindow? window;
+										 windows.remove (id, out window);
+										 if (window != null) {
+											 window.closed ();
+										 }
+									 }
+								 }
+
 								 var temp = Decoder (((!)output_line).dup ());
-								 if (temp.pop_id () == time && temp.pop_id () == output_num) {
+								 if (temp.pop_id () == time) {
 									 break;
 								 }
 							 }
+							 if (todo == null) {
+								 critical ("%s:%s: Output for no command.", name, session_name);
+								 break;
+							 }
 
-							 switch (action) {
+							 switch (todo.action) {
 							  /*
 							   * A whole window update. Pump through to Vte.
 							   */
-							  case NextOutput.CAPTURE :
-								  if (windows.has_key (window_id)) {
-									  var window = windows[window_id];
+							  case NextOutput.CAPTURE:
+								  if (windows.has_key (todo.window_id)) {
+									  var window = windows[todo.window_id];
 									  window.rx_data ("\r\n".data);
 									  if (((!)output_line).length > 0) {
 										  window.rx_data (((!)output_line).data);
 									  }
 								  } else {
-									  warning ("%s:%s: Received capture for non-existent window %d.", name, session_name, window_id);
+									  warning ("%s:%s: Received capture for non-existent window %d.", name, session_name, todo.window_id);
 								  }
 								  break;
 
@@ -260,6 +269,7 @@ namespace TabbedMux {
 								  var id = info_decoder.pop_id ();
 								  var title = info_decoder.get_remainder ();
 								  TMuxWindow window;
+								  todie.remove (id);
 								  if (windows.has_key (id)) {
 									  window = windows[id];
 								  } else {
@@ -326,6 +336,9 @@ namespace TabbedMux {
 					 case "%unlinked-window-add":
 					 case "%unlinked-window-rename":
 					 case "%unlinked-window-delete":
+					 case "%unlinked-window-close":
+					 case "%window-pane-changed":
+					 case "%pane-mode-changed":
 						 break;
 
 					 /*
@@ -344,6 +357,8 @@ namespace TabbedMux {
 					  */
 					 case "%session-changed":
 					 case "%window-add":
+					 case "%client-session-changed":
+					 case "%session-window-changed":
 						 yield exec (true, @"list-windows -t $(Shell.quote(session_name)) -F \"#{window_id}:#{window_name}\"", NextOutput.WINDOWS);
 						 break;
 
@@ -403,7 +418,7 @@ namespace TabbedMux {
 						 break;
 
 					 default:
-						 critical ("%s:%s: Unrecognised command from TMux: %s", name, session_name, (!)str);
+						 critical ("%s:%s: Unrecognised command from TMux: %s", name, session_name, decoder.command);
 						 break;
 					}
 					yield wait_idle ();
@@ -569,12 +584,12 @@ namespace TabbedMux {
 			buffer.append ("set-buffer \"");
 			for (var it = 0; it < text.length; it++) {
 				switch (text[it]) {
-				 case '$' :
+				 case '$':
 					 buffer.append_c ('\\');
 					 buffer.append_c ('$');
 					 break;
 
-				 case '\n' :
+				 case '\n':
 					 buffer.append_c ('\r');
 					 break;
 
