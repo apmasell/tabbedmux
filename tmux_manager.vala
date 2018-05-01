@@ -218,7 +218,7 @@ namespace TabbedMux {
 								 if (todo.action == NextOutput.WINDOWS) {
 									 foreach (var id in todie) {
 										 TMuxWindow? window;
-										 windows.remove (id, out window);
+										 windows.unset (id, out window);
 										 if (window != null) {
 											 window.closed ();
 										 }
