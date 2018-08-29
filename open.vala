@@ -71,7 +71,7 @@ public class TabbedMux.OpenDialog : Gtk.Dialog {
 				var port_text = strip (port.text);
 				if (port_text.length != 0) {
 					if (!uint64.try_parse (strip (port.text), out port_number)) {
-						show_error (this, "Port is too large.");
+						show_error (this, "Port is not a number.");
 						return;
 					}
 					if (port_number > ushort.MAX) {
