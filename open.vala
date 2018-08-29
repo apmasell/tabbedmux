@@ -74,7 +74,7 @@ public class TabbedMux.OpenDialog : Gtk.Dialog {
 						show_error (this, "Port is too large.");
 						return;
 					}
-					if (port_number > short.MAX) {
+					if (port_number > ushort.MAX) {
 						show_error (this, "Port is too large.");
 						return;
 					}
