@@ -142,7 +142,11 @@ namespace TabbedMux {
 		 * Set a TMux buffer.
 		 */
 		public void set_buffer (string data, uint buffer = 0) {
-			attempt_command (@"set-buffer -b $(buffer) $(Shell.quote (data))");
+			var command = new StringBuilder ();
+			command.append_printf ("set-buffer -b %ud", buffer);
+			fill_buffer (command, data);
+
+			attempt_command (command.str);
 		}
 
 		/**
@@ -581,34 +585,8 @@ namespace TabbedMux {
 		 */
 		public void paste_text (string text) {
 			var buffer = new StringBuilder ();
-			buffer.append ("set-buffer \"");
-			for (var it = 0; it < text.length; it++) {
-				switch (text[it]) {
-				 case '$':
-					 buffer.append_c ('\\');
-					 buffer.append_c ('$');
-					 break;
-
-				 case '\n':
-					 buffer.append_c ('\r');
-					 break;
-
-				 case '\"':
-					 buffer.append_c ('\\');
-					 buffer.append_c ('\"');
-					 break;
-
-				 case '\\':
-					 buffer.append_c ('\\');
-					 buffer.append_c ('\\');
-					 break;
-
-				 default:
-					 buffer.append_c (text[it]);
-					 break;
-				}
-			}
-			buffer.append_c ('\"');
+			buffer.append("set-buffer");
+			fill_buffer (buffer, text);
 			stream.attempt_command (buffer.str);
 			stream.attempt_command (@"paste-buffer -dp -t @$(id)");
 		}
@@ -724,4 +702,38 @@ namespace TabbedMux {
 			stream.attempt_command (command.str);
 		}
 	}
+
+	private void fill_buffer (StringBuilder buffer, string text) {
+		buffer.append (" -- '");
+		var tail = true;
+		for (var it = 0; it < text.length; it++) {
+			switch (text[it]) {
+				case '\n':
+					buffer.append_c ('\r');
+					break;
+
+				case '\'':
+					buffer.append ("'\"'\"'");
+					break;
+
+					case ';':
+						if (it == text.length - 1) {
+							buffer.append ("'\\;");
+							tail = false;
+						} else {
+							buffer.append_c (';');
+						}
+						break;
+
+					default:
+						buffer.append_c (text[it]);
+						break;
+			 }
+		}
+		if (tail) {
+			buffer.append_c ('\'');
+		}
+
+	}
+
 }
