@@ -585,7 +585,7 @@ namespace TabbedMux {
 		 */
 		public void paste_text (string text) {
 			var buffer = new StringBuilder ();
-			buffer.append("set-buffer");
+			buffer.append ("set-buffer");
 			fill_buffer (buffer, text);
 			stream.attempt_command (buffer.str);
 			stream.attempt_command (@"paste-buffer -dp -t @$(id)");
@@ -708,32 +708,30 @@ namespace TabbedMux {
 		var tail = true;
 		for (var it = 0; it < text.length; it++) {
 			switch (text[it]) {
-				case '\n':
-					buffer.append_c ('\r');
-					break;
+			 case '\n':
+				 buffer.append_c ('\r');
+				 break;
 
-				case '\'':
-					buffer.append ("'\"'\"'");
-					break;
+			 case '\'':
+				 buffer.append ("'\"'\"'");
+				 break;
 
-					case ';':
-						if (it == text.length - 1) {
-							buffer.append ("'\\;");
-							tail = false;
-						} else {
-							buffer.append_c (';');
-						}
-						break;
+			 case ';':
+				 if (it == text.length - 1) {
+					 buffer.append ("'\\;");
+					 tail = false;
+				 } else {
+					 buffer.append_c (';');
+				 }
+				 break;
 
-					default:
-						buffer.append_c (text[it]);
-						break;
-			 }
+			 default:
+				 buffer.append_c (text[it]);
+				 break;
+			}
 		}
 		if (tail) {
 			buffer.append_c ('\'');
 		}
-
 	}
-
 }
