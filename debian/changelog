@@ -1,3 +1,11 @@
+tabbedmux (1.25~ppa0) bionic; urgency=medium
+
+  * Improve paste handling
+  * Produce better error message when port is not a number
+  * Use unsigned short instead of signed short for port number
+
+ -- Andre Masella <andre@masella.name>  Mon, 06 Apr 2020 22:41:30 -0400
+
 tabbedmux (1.24~ppa0) bionic; urgency=medium
 
   * Add support for tmux 2.6
