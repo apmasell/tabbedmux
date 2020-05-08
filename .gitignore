@@ -1,5 +1,6 @@
 *.c
 *.gresource
+*.snap
 *~
 debian/*.log
 debian/*.substvars
