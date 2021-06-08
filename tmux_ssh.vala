@@ -138,20 +138,20 @@ internal class TabbedMux.TMuxSshStream : TMuxStream {
 				 break;
 
 			 case SSH2.CheckResult.MISMATCH :
-				 good_key = run_host_key_dialog<void *> (busy_dialog, "KEY MISTMATCH!!! POSSIBLE ATTACK!!!", "Proceed Anyway", "Stop Immediately", matcher.session, host, port, null);
+				 good_key = run_host_key_dialog<weak TabbedMux.AsyncImpedanceMatcher> (busy_dialog, "KEY MISTMATCH!!! POSSIBLE ATTACK!!!", "Proceed Anyway", "Stop Immediately", matcher.session, host, port, null);
 				 break;
 
 			 case SSH2.CheckResult.NOTFOUND :
-				 good_key = run_host_key_dialog<void *> (busy_dialog, "Unknown host.", "Accept Once", "Cancel", matcher.session, host, port, known_hosts);
+				 good_key = run_host_key_dialog<weak TabbedMux.AsyncImpedanceMatcher> (busy_dialog, "Unknown host.", "Accept Once", "Cancel", matcher.session, host, port, known_hosts);
 				 break;
 
 			 case SSH2.CheckResult.FAILURE :
-				 good_key = run_host_key_dialog<void *> (busy_dialog, "Failed to check for public key.", "Accept Once", "Cancel", matcher.session, host, port, null);
+				 good_key = run_host_key_dialog<weak TabbedMux.AsyncImpedanceMatcher> (busy_dialog, "Failed to check for public key.", "Accept Once", "Cancel", matcher.session, host, port, null);
 				 break;
 			}
 		} catch (IOError e) {
 			message ("Known hosts check: %s", e.message);
-			good_key = run_host_key_dialog<void *> (busy_dialog, "No database of known hosts.", "Accept Once", "Cancel", matcher.session, host, port, known_hosts);
+			good_key = run_host_key_dialog<weak TabbedMux.AsyncImpedanceMatcher> (busy_dialog, "No database of known hosts.", "Accept Once", "Cancel", matcher.session, host, port, known_hosts);
 		}
 		if (!good_key) {
 			return null;

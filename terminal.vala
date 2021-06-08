@@ -56,7 +56,6 @@ public class TabbedMux.Terminal : Gtk.Box {
 
 		/* Set up the VTE terminal. */
 		terminal.pointer_autohide = true;
-		terminal.encoding = "UTF-8";
 		var list = new Gtk.TargetList ({});
 		list.add_text_targets (0);
 		list.add_uri_targets (1);
@@ -71,7 +70,7 @@ public class TabbedMux.Terminal : Gtk.Box {
 
 		if (uri_regex != null) {
 			int id = terminal.match_add_regex (uri_regex, 0);
-			terminal.match_set_cursor_type (id, Gdk.CursorType.HAND2);
+			terminal.match_set_cursor_name (id, "hand2");
 		}
 
 		/* Put the terminal in a box in this box. This ensure that the terminal can have both vertical and horizontal free padding*/

@@ -42,6 +42,7 @@ tabbedmux: $(SOURCES) version.h
 		--save-temps \
 		--target-glib=2.38 \
 		--vapidir . \
+		-X -I. \
 		$(VALA_PKGS) $^ -o $@
 
 GLIB_COMPILE_RESOURCES=glib-compile-resources
