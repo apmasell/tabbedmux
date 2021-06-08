@@ -37,7 +37,7 @@ public class TabbedMux.Terminal : Gtk.Box {
 				buffer.append (type.offset (X_SCHEME_HANDLER.length));
 			}
 		}
-		buffer.append ("):([A-Za-z0-9_~:/?#@!$&'()*+,;=[\\].-]|%[0-9A-Fa-f][0-9A-Fa-f])+");
+		buffer.append ("):([A-Za-z0-9_~:/?#@!$&'()*+,;=.-]|\\[|\\]|%[0-9A-Fa-f][0-9A-Fa-f])+");
 		message ("URL regex: %s", buffer.str);
 		try {
 			uri_regex = new Vte.Regex.for_match (buffer.str, buffer.len, 0);
