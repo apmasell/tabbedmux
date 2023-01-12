@@ -1,3 +1,9 @@
+tabbedmux (1.26~ppa1) jammy; urgency=medium
+
+  * Update to jammy
+
+ -- Andre Masella <andre@masella.name>  Tue, 16 Aug 2022 20:47:15 -0400
+
 tabbedmux (1.26~ppa0) focal; urgency=medium
 
   * Fix hyperlink support

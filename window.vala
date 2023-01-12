@@ -52,27 +52,27 @@ bool is_monospace_font (Pango.FontFamily family, Pango.FontFace face) {
 [GtkTemplate (ui = "/name/masella/tabbedmux/window.ui")]
 public class TabbedMux.Window : Gtk.ApplicationWindow {
 	[GtkChild]
-	private Gtk.MenuItem copy_item;
+	private unowned Gtk.MenuItem copy_item;
 	[GtkChild]
-	private Gtk.Menu new_menu;
+	private unowned Gtk.Menu new_menu;
 	[GtkChild]
-	private Gtk.MenuItem new_session_item;
+	private unowned Gtk.MenuItem new_session_item;
 	[GtkChild]
-	private Gtk.Notebook notebook;
+	private unowned Gtk.Notebook notebook;
 	[GtkChild]
-	private Gtk.Menu disconnect_menu;
+	private unowned Gtk.Menu disconnect_menu;
 	[GtkChild]
-	private Gtk.MenuItem paste_item;
+	private unowned Gtk.MenuItem paste_item;
 	[GtkChild]
-	private Gtk.Menu saved_menu;
+	private unowned Gtk.Menu saved_menu;
 	[GtkChild]
-	private Gtk.MenuItem saved_sessions_item;
+	private unowned Gtk.MenuItem saved_sessions_item;
 	[GtkChild]
-	private Gtk.Menu remove_saved_menu;
+	private unowned Gtk.Menu remove_saved_menu;
 	[GtkChild]
-	private Gtk.MenuItem remove_saved_item;
+	private unowned Gtk.MenuItem remove_saved_item;
 	[GtkChild]
-	private Gtk.MenuItem rename_window_item;
+	private unowned Gtk.MenuItem rename_window_item;
 
 	private Settings settings;
 	private uint configure_id;

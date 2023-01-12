@@ -5,19 +5,19 @@
 public class TabbedMux.OpenDialog : Gtk.Dialog {
 	public bool success = false;
 	[GtkChild]
-	private Gtk.RadioButton remote_connection;
+	private unowned Gtk.RadioButton remote_connection;
 	[GtkChild]
-	private Gtk.Entry user;
+	private unowned Gtk.Entry user;
 	[GtkChild]
-	private Gtk.Entry host;
+	private unowned Gtk.Entry host;
 	[GtkChild]
-	private Gtk.Entry port;
+	private unowned Gtk.Entry port;
 	[GtkChild]
-	private Gtk.Entry session;
+	private unowned Gtk.Entry session;
 	[GtkChild]
-	private Gtk.Entry binary;
+	private unowned Gtk.Entry binary;
 	[GtkChild]
-	private Gtk.CheckButton save;
+	private unowned Gtk.CheckButton save;
 
 	internal OpenDialog (Window parent) {
 		Object (application: parent.application, transient_for: parent);
@@ -134,7 +134,7 @@ public class TabbedMux.OpenDialog : Gtk.Dialog {
 [GtkTemplate (ui = "/name/masella/tabbedmux/busy.ui")]
 public class TabbedMux.BusyDialog : Gtk.Dialog {
 	[GtkChild]
-	private Gtk.Label text;
+	private unowned Gtk.Label text;
 	public string message {
 		set {
 			text.label = value;

@@ -1316,7 +1316,7 @@ namespace SSH2 {
 			}
 		}
 	}
-	[CCode (cname = "int", cprefix = "SSH_METHOD_", has_type_id = false)]
+	[CCode (cname = "int", cprefix = "LIBSSH2_METHOD_", has_type_id = false)]
 	public enum MethodType {
 		KEX,
 		HOSTKEY,
